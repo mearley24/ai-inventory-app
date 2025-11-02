@@ -8,9 +8,11 @@ import { View } from "react-native";
 import InventoryScreen from "../screens/InventoryScreen";
 import ScannerScreen from "../screens/ScannerScreen";
 import TimeTrackerScreen from "../screens/TimeTrackerScreen";
+import PasswordVaultScreen from "../screens/PasswordVaultScreen";
 import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
 import ImportScreen from "../screens/ImportScreen";
+import AddPasswordScreen from "../screens/AddPasswordScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import { useAuthStore } from "../state/authStore";
@@ -48,6 +50,8 @@ function TabNavigator() {
             iconName = focused ? "cube" : "cube-outline";
           } else if (route.name === "Scanner") {
             iconName = focused ? "scan" : "scan-outline";
+          } else if (route.name === "PasswordVault") {
+            iconName = focused ? "lock-closed" : "lock-closed-outline";
           } else if (route.name === "TimeTracker") {
             iconName = focused ? "timer" : "timer-outline";
           }
@@ -88,6 +92,11 @@ function TabNavigator() {
         name="Scanner"
         component={ScannerScreen}
         options={{ tabBarLabel: "Scan" }}
+      />
+      <Tab.Screen
+        name="PasswordVault"
+        component={PasswordVaultScreen}
+        options={{ tabBarLabel: "Vault" }}
       />
       <Tab.Screen
         name="TimeTracker"
@@ -131,6 +140,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Import"
             component={ImportScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="AddPassword"
+            component={AddPasswordScreen}
             options={{ presentation: "modal" }}
           />
         </>

@@ -1,16 +1,25 @@
 # AI Inventory Tracker
 
-A beautiful, AI-powered inventory management app with barcode scanning, time tracking, and **multi-user team collaboration** built for SnapAV/Snap One professionals.
+A beautiful, AI-powered inventory management app with barcode scanning, time tracking, **multi-user team collaboration**, and **secure password vault** built for SnapAV/Snap One professionals.
 
 ## Features
 
-### 👥 **Multi-User Authentication & Collaboration** ⭐ NEW!
+### 👥 **Multi-User Authentication & Collaboration**
 - Secure login with email/password via Firebase
 - Company-based account system
 - User roles: Owner, Admin, Manager, Field Worker
 - Team assignments for organizing field staff
 - Cloud-synced inventory (ready for implementation)
 - Persistent login across app restarts
+
+### 🔐 **Secure Password Vault** ⭐ NEW!
+- Encrypted password storage for client systems
+- **Copy passwords without ever seeing them**
+- Share credentials with team members securely
+- Category-based organization (Network, Control4, Security Systems, etc.)
+- Access logging and audit trails
+- Perfect for field technicians accessing client systems
+- See [PASSWORD_VAULT.md](./PASSWORD_VAULT.md) for details
 
 ### 🗂️ Inventory Management
 - View all inventory items in a clean, card-based interface

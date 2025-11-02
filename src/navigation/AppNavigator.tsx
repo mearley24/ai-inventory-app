@@ -117,7 +117,10 @@ export default function AppNavigator() {
   }, []);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={isAuthenticated ? "Main" : "Login"}
+    >
       {!isAuthenticated ? (
         // Auth Stack
         <>
@@ -127,7 +130,14 @@ export default function AppNavigator() {
       ) : (
         // App Stack
         <>
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen
+            name="Main"
+            component={TabNavigator}
+            options={{
+              // Prevent going back to login
+              gestureEnabled: false,
+            }}
+          />
           <Stack.Screen
             name="AddItem"
             component={AddItemScreen}

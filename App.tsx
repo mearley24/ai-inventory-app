@@ -29,7 +29,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer
+          onStateChange={(state) => {
+            // Don't persist navigation state - always start fresh
+            console.log('Navigation state changed');
+          }}
+        >
           <AppNavigator />
           <StatusBar style="auto" />
         </NavigationContainer>

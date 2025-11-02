@@ -183,14 +183,25 @@ export default function InventoryScreen({ navigation }: any) {
             <Text className="text-base text-neutral-500">
               {items.length} items • {lowStockItems.length} low stock
             </Text>
-            {starredLowStockItems.length > 0 && (
-              <View className="bg-amber-100 rounded-full px-3 py-1 flex-row items-center">
-                <Ionicons name="warning" size={14} color="#F59E0B" />
-                <Text className="text-amber-700 font-semibold text-xs ml-1">
-                  {starredLowStockItems.length} starred low
+            <View className="flex-row items-center gap-2">
+              {starredLowStockItems.length > 0 && (
+                <View className="bg-amber-100 rounded-full px-3 py-1 flex-row items-center">
+                  <Ionicons name="warning" size={14} color="#F59E0B" />
+                  <Text className="text-amber-700 font-semibold text-xs ml-1">
+                    {starredLowStockItems.length} starred low
+                  </Text>
+                </View>
+              )}
+              <Pressable
+                onPress={() => navigation.navigate("DuplicateFinder")}
+                className="bg-orange-100 rounded-full px-3 py-1 flex-row items-center"
+              >
+                <Ionicons name="copy" size={14} color="#EA580C" />
+                <Text className="text-orange-700 font-semibold text-xs ml-1">
+                  Find Duplicates
                 </Text>
-              </View>
-            )}
+              </Pressable>
+            </View>
           </View>
         </View>
 

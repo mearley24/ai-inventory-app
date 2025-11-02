@@ -13,6 +13,7 @@ import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
 import ImportScreen from "../screens/ImportScreen";
 import InvoiceUploadScreen from "../screens/InvoiceUploadScreen";
+import DuplicateFinderScreen from "../screens/DuplicateFinderScreen";
 import AddPasswordScreen from "../screens/AddPasswordScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
@@ -156,6 +157,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="InvoiceUpload"
             component={InvoiceUploadScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="DuplicateFinder"
+            component={DuplicateFinderScreen}
             options={{ presentation: "modal" }}
           />
           <Stack.Screen

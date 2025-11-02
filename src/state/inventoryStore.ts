@@ -14,6 +14,8 @@ interface InventoryState {
   getLowStockItems: () => InventoryItem[];
   toggleStarred: (id: string) => void;
   getStarredLowStockItems: () => InventoryItem[];
+  findDuplicates: () => InventoryItem[][];
+  mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => void;
 }
 
 export const useInventoryStore = create<InventoryState>()(
@@ -89,6 +91,39 @@ export const useInventoryStore = create<InventoryState>()(
             item.lowStockThreshold &&
             item.quantity <= item.lowStockThreshold
         );
+      },
+
+      findDuplicates: () => {
+        const items = get().items;
+        const groupedByName: { [key: string]: InventoryItem[] } = {};
+
+        // Group items by normalized name
+        items.forEach((item) => {
+          const normalizedName = item.name.toLowerCase().trim();
+          if (!groupedByName[normalizedName]) {
+            groupedByName[normalizedName] = [];
+          }
+          groupedByName[normalizedName].push(item);
+        });
+
+        // Return only groups with more than one item (duplicates)
+        return Object.values(groupedByName).filter((group) => group.length > 1);
+      },
+
+      mergeDuplicates: (itemsToMerge, keepItem) => {
+        // Sum up quantities from all items being merged
+        const totalQuantity = itemsToMerge.reduce((sum, item) => sum + item.quantity, 0);
+
+        // Update the kept item with the total quantity
+        set((state) => ({
+          items: state.items
+            .filter((item) => !itemsToMerge.find((m) => m.id === item.id) || item.id === keepItem.id)
+            .map((item) =>
+              item.id === keepItem.id
+                ? { ...item, quantity: totalQuantity, updatedAt: Date.now() }
+                : item
+            ),
+        }));
       },
     }),
     {

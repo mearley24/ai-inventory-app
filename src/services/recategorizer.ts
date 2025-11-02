@@ -2,75 +2,183 @@ import { InventoryItem } from "../types/inventory";
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 
-// Predefined category sets for popular suppliers
-const SUPPLIER_CATEGORIES: { [key: string]: string[] } = {
-  "snapav.com": [
-    "Control4",
-    "Audio",
-    "Bulk Wire & Connectors",
-    "Cables",
-    "Conferencing",
-    "Control",
-    "Lighting",
-    "Media Distribution",
-    "Mounts",
-    "Networking",
-    "Power",
-    "Projectors & Screens",
-    "Racks",
-    "Smart Security & Access",
-    "Speakers",
-    "Surveillance",
-    "Televisions",
-    "Tools & Hardware",
-    "Other",
-  ],
-  "adorama.com": [
-    "Cameras",
-    "Lenses",
-    "Lighting",
-    "Video Equipment",
-    "Audio Equipment",
-    "Computers",
-    "Drones",
-    "Optics",
-    "Telescopes",
-    "Accessories",
-    "Other",
-  ],
-  "bhphotovideo.com": [
-    "Cameras",
-    "Lenses",
-    "Lighting & Studio",
-    "Video",
-    "Audio",
-    "Computers",
-    "Drones & Aerial Imaging",
-    "Pro Video",
-    "Pro Audio",
-    "Optics",
-    "Other",
-  ],
-  "amazon.com": [
-    "Electronics",
-    "Computers",
-    "Home & Kitchen",
-    "Tools & Home Improvement",
-    "Office Products",
-    "Camera & Photo",
-    "Cell Phones & Accessories",
-    "Video Games",
-    "Sports & Outdoors",
-    "Other",
-  ],
+// Category structure with subcategories
+interface CategoryStructure {
+  [category: string]: string[];
+}
+
+// Predefined category sets for popular suppliers with subcategories
+const SUPPLIER_CATEGORIES: { [key: string]: CategoryStructure } = {
+  "snapav.com": {
+    "Control4": [
+      "Controllers",
+      "Keypads",
+      "Interfaces",
+      "Dimmers & Switches",
+      "Remotes",
+      "Sensors",
+      "Other Control4",
+    ],
+    "Audio": [
+      "Amplifiers",
+      "Receivers",
+      "Speakers",
+      "Subwoofers",
+      "Audio Processors",
+      "Media Streamers",
+      "Other Audio",
+    ],
+    "Bulk Wire & Connectors": [
+      "Speaker Wire",
+      "Network Cable",
+      "Coax Cable",
+      "Connectors",
+      "Patch Panels",
+      "Other Wire",
+    ],
+    "Cables": [
+      "HDMI Cables",
+      "Network Cables",
+      "Audio Cables",
+      "Video Cables",
+      "Power Cables",
+      "Adapters",
+      "Other Cables",
+    ],
+    "Conferencing": [
+      "Cameras",
+      "Microphones",
+      "Speakers",
+      "Control Systems",
+      "Accessories",
+      "Other Conferencing",
+    ],
+    "Control": [
+      "Remotes",
+      "Keypads",
+      "Touch Panels",
+      "Controllers",
+      "Sensors",
+      "Other Control",
+    ],
+    "Lighting": [
+      "Dimmers",
+      "Switches",
+      "LED Fixtures",
+      "Controls",
+      "Sensors",
+      "Other Lighting",
+    ],
+    "Media Distribution": [
+      "Matrices",
+      "Extenders",
+      "Scalers",
+      "Distribution Amps",
+      "Transmitters",
+      "Receivers",
+      "Other Distribution",
+    ],
+    "Mounts": [
+      "TV Mounts",
+      "Speaker Mounts",
+      "Camera Mounts",
+      "Ceiling Mounts",
+      "Wall Plates",
+      "Other Mounts",
+    ],
+    "Networking": [
+      "Switches",
+      "Routers",
+      "Access Points",
+      "Network Adapters",
+      "PoE Injectors",
+      "Network Tools",
+      "Other Networking",
+    ],
+    "Power": [
+      "UPS Systems",
+      "Power Conditioners",
+      "Surge Protectors",
+      "PDUs",
+      "Power Supplies",
+      "Other Power",
+    ],
+    "Projectors & Screens": [
+      "Projectors",
+      "Screens",
+      "Mounts",
+      "Accessories",
+      "Other Projection",
+    ],
+    "Racks": [
+      "Equipment Racks",
+      "Wall Mount Racks",
+      "Rack Accessories",
+      "Cable Management",
+      "Other Racks",
+    ],
+    "Smart Security & Access": [
+      "Door Locks",
+      "Thermostats",
+      "Sensors",
+      "Access Control",
+      "Intercoms",
+      "Other Security",
+    ],
+    "Speakers": [
+      "In-Ceiling",
+      "In-Wall",
+      "Outdoor",
+      "Bookshelf",
+      "Soundbars",
+      "Subwoofers",
+      "Other Speakers",
+    ],
+    "Surveillance": [
+      "IP Cameras",
+      "NVRs",
+      "DVRs",
+      "Camera Accessories",
+      "Video Management",
+      "Other Surveillance",
+    ],
+    "Televisions": [
+      "Commercial Displays",
+      "Residential TVs",
+      "Outdoor TVs",
+      "Accessories",
+      "Other Displays",
+    ],
+    "Tools & Hardware": [
+      "Installation Tools",
+      "Test Equipment",
+      "Hardware",
+      "Connectors",
+      "Other Tools",
+    ],
+    "Other": ["Uncategorized"],
+  },
 };
 
 /**
- * Get categories for a website (from predefined list or AI extraction)
+ * Get flat list of all category + subcategory combinations
+ */
+function getFlatCategoryList(structure: CategoryStructure): string[] {
+  const flat: string[] = [];
+  for (const [category, subcategories] of Object.entries(structure)) {
+    for (const subcategory of subcategories) {
+      flat.push(`${category} > ${subcategory}`);
+    }
+  }
+  return flat;
+}
+
+/**
+ * Get categories for a website
  */
 export async function getCategoriesForWebsite(
   websiteUrl: string
-): Promise<string[]> {
+): Promise<CategoryStructure> {
   try {
     // Normalize URL
     const domain = websiteUrl
@@ -82,31 +190,30 @@ export async function getCategoriesForWebsite(
     console.log("Looking up categories for domain:", domain);
 
     // Check if we have predefined categories for this supplier
-    for (const [key, categories] of Object.entries(SUPPLIER_CATEGORIES)) {
+    for (const [key, structure] of Object.entries(SUPPLIER_CATEGORIES)) {
       if (domain.includes(key)) {
         console.log("Found predefined categories for:", key);
-        return categories;
+        return structure;
       }
     }
 
-    // If no predefined categories, use AI to infer categories from product names
-    console.log("No predefined categories, will use generic categorization");
-    return [
-      "Audio & Video",
-      "Cables & Connectors",
-      "Cameras & Surveillance",
-      "Computers & Networking",
-      "Control Systems",
-      "Lighting",
-      "Mounts & Hardware",
-      "Power & Distribution",
-      "Security & Access",
-      "Tools & Equipment",
-      "Other",
-    ];
+    // If no predefined categories, use generic structure
+    console.log("No predefined categories, using generic structure");
+    return {
+      "Audio & Video": ["Speakers", "Amplifiers", "Players", "Accessories", "Other"],
+      "Cables & Connectors": ["HDMI", "Network", "Audio", "Power", "Adapters", "Other"],
+      "Cameras & Surveillance": ["IP Cameras", "NVRs", "Accessories", "Other"],
+      "Computers & Networking": ["Switches", "Routers", "Accessories", "Other"],
+      "Control Systems": ["Controllers", "Remotes", "Keypads", "Other"],
+      "Lighting": ["Fixtures", "Controls", "Dimmers", "Other"],
+      "Mounts & Hardware": ["TV Mounts", "Speaker Mounts", "Hardware", "Other"],
+      "Power & Distribution": ["UPS", "Surge Protection", "PDUs", "Other"],
+      "Security & Access": ["Locks", "Sensors", "Access Control", "Other"],
+      "Tools & Equipment": ["Installation Tools", "Test Equipment", "Other"],
+      "Other": ["Uncategorized"],
+    };
   } catch (error) {
     console.error("Error getting categories:", error);
-    // Fallback to default categories
     return SUPPLIER_CATEGORIES["snapav.com"];
   }
 }
@@ -116,16 +223,19 @@ export async function getCategoriesForWebsite(
  */
 export async function recategorizeItems(
   items: InventoryItem[],
-  categories: string[],
+  categoryStructure: CategoryStructure,
   onProgress?: (message: string, current: number, total: number) => void
-): Promise<{ id: string; oldCategory: string; newCategory: string }[]> {
-  const results: { id: string; oldCategory: string; newCategory: string }[] = [];
+): Promise<{ id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[]> {
+  const results: { id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[] = [];
 
   if (items.length === 0) {
     return results;
   }
 
   onProgress?.("Analyzing items with AI...", 0, items.length);
+
+  // Get flat list of category > subcategory combinations
+  const flatCategories = getFlatCategoryList(categoryStructure);
 
   // Batch items for efficiency (process in chunks of 20)
   const batchSize = 20;
@@ -143,12 +253,13 @@ export async function recategorizeItems(
         name: item.name,
         description: item.description || "",
         currentCategory: item.category,
+        currentSubcategory: item.subcategory,
       }));
 
       const prompt = `You are a product categorization expert.
 
-Given these inventory items, categorize each one into the most appropriate category from this list:
-${categories.join(", ")}
+Given these inventory items, categorize each one into the most appropriate category and subcategory from this list:
+${flatCategories.join("\n")}
 
 Items to categorize:
 ${JSON.stringify(itemsForAI, null, 2)}
@@ -157,14 +268,15 @@ Return ONLY a JSON array with this format (no markdown, no code blocks):
 [
   {
     "id": "item_id",
-    "category": "Category Name"
+    "category": "Main Category",
+    "subcategory": "Subcategory"
   }
 ]
 
 Rules:
-- Use the exact category names from the list above
+- Use the exact category and subcategory names from the list above
+- Format: "Category > Subcategory" from the list
 - Match based on product name and description
-- If unsure, use "Other"
 - Return valid JSON only`;
 
       const response = await fetch(
@@ -207,16 +319,19 @@ Rules:
       const categorizations = JSON.parse(content) as {
         id: string;
         category: string;
+        subcategory: string;
       }[];
 
       // Process results
       for (const cat of categorizations) {
         const item = batch.find((i) => i.id === cat.id);
-        if (item && item.category !== cat.category) {
+        if (item && (item.category !== cat.category || item.subcategory !== cat.subcategory)) {
           results.push({
             id: item.id,
             oldCategory: item.category,
             newCategory: cat.category,
+            oldSubcategory: item.subcategory,
+            newSubcategory: cat.subcategory,
           });
         }
       }

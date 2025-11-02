@@ -17,7 +17,7 @@ interface InventoryState {
   findDuplicates: () => InventoryItem[][];
   mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => void;
   autoMergeAllDuplicates: () => { merged: number; removed: number };
-  bulkUpdateCategories: (updates: { id: string; category: string }[]) => void;
+  bulkUpdateCategories: (updates: { id: string; category: string; subcategory?: string }[]) => void;
 }
 
 export const useInventoryStore = create<InventoryState>()(
@@ -171,14 +171,15 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       bulkUpdateCategories: (updates) => {
-        const updateMap = new Map(updates.map((u) => [u.id, u.category]));
+        const updateMap = new Map(updates.map((u) => [u.id, { category: u.category, subcategory: u.subcategory }]));
         set((state) => ({
           items: state.items.map((item) => {
-            const newCategory = updateMap.get(item.id);
-            if (newCategory) {
+            const update = updateMap.get(item.id);
+            if (update) {
               return {
                 ...item,
-                category: newCategory,
+                category: update.category,
+                subcategory: update.subcategory,
                 updatedAt: Date.now(),
               };
             }

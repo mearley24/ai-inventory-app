@@ -16,6 +16,10 @@ import { useInventoryStore } from "../state/inventoryStore";
 import { recategorizeItems, getCategoriesForWebsite } from "../services/recategorizer";
 import { safeGoBack } from "../utils/navigation";
 
+interface CategoryStructure {
+  [category: string]: string[];
+}
+
 type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
@@ -25,11 +29,11 @@ export default function RecategorizeScreen({ navigation }: Props) {
   const bulkUpdateCategories = useInventoryStore((s) => s.bulkUpdateCategories);
 
   const [websiteUrl, setWebsiteUrl] = useState("https://www.snapav.com");
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryStructure, setCategoryStructure] = useState<CategoryStructure>({});
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState("");
   const [results, setResults] = useState<
-    { id: string; oldCategory: string; newCategory: string }[]
+    { id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[]
   >([]);
 
   const handleRecategorize = async () => {
@@ -58,8 +62,9 @@ export default function RecategorizeScreen({ navigation }: Props) {
             try {
               // Step 1: Extract categories from website
               const extractedCategories = await getCategoriesForWebsite(websiteUrl);
-              setCategories(extractedCategories);
-              setProgress(`Found ${extractedCategories.length} categories`);
+              setCategoryStructure(extractedCategories);
+              const categoryCount = Object.keys(extractedCategories).length;
+              setProgress(`Found ${categoryCount} main categories`);
 
               // Step 2: Recategorize items
               const changes = await recategorizeItems(
@@ -77,6 +82,7 @@ export default function RecategorizeScreen({ navigation }: Props) {
                 const updates = changes.map((r) => ({
                   id: r.id,
                   category: r.newCategory,
+                  subcategory: r.newSubcategory,
                 }));
 
                 bulkUpdateCategories(updates);
@@ -84,7 +90,7 @@ export default function RecategorizeScreen({ navigation }: Props) {
                 setProgress(`Complete! Updated ${changes.length} items`);
                 Alert.alert(
                   "Success!",
-                  `✅ Extracted ${extractedCategories.length} categories\n✅ Updated ${changes.length} items automatically\n\nAll items now match website categories!`,
+                  `✅ Extracted ${categoryCount} categories\n✅ Updated ${changes.length} items automatically\n\nAll items now have categories and subcategories!`,
                   [{ text: "OK", onPress: () => safeGoBack(navigation) }]
                 );
               } else {
@@ -182,9 +188,9 @@ export default function RecategorizeScreen({ navigation }: Props) {
             <Text className="text-white/90 text-sm">
               Total Items: {items.length}
             </Text>
-            {categories.length > 0 && (
+            {Object.keys(categoryStructure).length > 0 && (
               <Text className="text-white/90 text-sm">
-                Categories Found: {categories.length}
+                Categories Found: {Object.keys(categoryStructure).length}
               </Text>
             )}
             {results.length > 0 && (

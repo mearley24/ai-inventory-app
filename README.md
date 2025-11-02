@@ -25,6 +25,7 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - View all inventory items in a clean, card-based interface
 - Search and filter items by name, description, and category
 - **⭐ Star favorite/everyday items** for quick access and alerts
+- **📊 In Stock vs All Items Tabs** - Separate views for items with stock vs. full inventory
 - Add items manually or through barcode scanning
 - Edit item details with intuitive +/- quantity controls
 - Price tracking for each item
@@ -32,6 +33,8 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - **Low stock alerts** to keep track of inventory levels
 - **Special alerts for starred items** - get notified when everyday items run low
 - **SnapAV/Snap One category system** (Control4, Audio, Cables, Networking, Surveillance, etc.)
+- **🎯 Subcategory Support** - Precise categorization (e.g., "Audio > Amplifiers", "Control4 > Controllers")
+- **🤖 AI-Powered Recategorization** - Automatically match items to correct categories & subcategories
 - **Bulk CSV/Excel import** for loading large price lists
 - **📄 AI-Powered Invoice Upload** - Scan/upload invoices (images & PDFs) to auto-populate inventory
 - **📁 Invoice Folder System** ⭐ NEW! - Drop invoices in a folder for automatic batch processing
@@ -59,7 +62,8 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - Smart product identification from barcodes
 - **AI-powered invoice parsing** using GPT-4o Vision
 - Extract line items automatically from invoice photos
-- Automatic category suggestions
+- **AI-powered recategorization** - Automatically update all items to match supplier website categories
+- Automatic category and subcategory suggestions
 - Context-aware item naming
 
 ## Design
@@ -115,6 +119,7 @@ src/
 │   ├── ImportScreen.tsx         # CSV/Excel import
 │   ├── InvoiceUploadScreen.tsx  # AI invoice parsing
 │   ├── InvoiceFolderScreen.tsx  # Invoice folder management
+│   ├── RecategorizeScreen.tsx   # AI recategorization
 │   ├── DuplicateFinderScreen.tsx # Duplicate item finder
 │   └── AddPasswordScreen.tsx    # Add new passwords
 ├── navigation/        # Navigation configuration
@@ -135,7 +140,8 @@ src/
 │   └── chat-service.ts          # LLM text generation
 ├── services/         # Background services
 │   ├── invoiceScanner.ts        # Invoice folder scanning logic
-│   └── invoiceScannerTask.ts    # Background task for hourly scans
+│   ├── invoiceScannerTask.ts    # Background task for hourly scans
+│   └── recategorizer.ts         # AI recategorization with subcategories
 ├── config/           # Configuration
 │   └── firebase.ts              # Firebase initialization
 └── utils/            # Utility functions
@@ -154,6 +160,7 @@ Each inventory item includes:
 - Quantity
 - **Price** (optional, for tracking costs/selling prices)
 - Category
+- **Subcategory** (optional, for precise classification)
 - Description (optional)
 - Low stock threshold (optional)
 - **Starred/Favorite flag** (for everyday items)
@@ -216,6 +223,42 @@ The invoice folder is created automatically at app startup. Access it via the fo
 - Works best with standard invoice formats
 - Supports SnapAV and major distributor invoices
 - PDF support for digital invoices
+
+## AI-Powered Recategorization ⭐ NEW!
+
+Automatically update all inventory items to match precise categories and subcategories from any supplier website.
+
+**How it Works:**
+1. Navigate to Inventory screen → Tap the "⚙️" menu → Select "Recategorize"
+2. Enter the supplier website URL (e.g., snapav.com, adorama.com, bhphotovideo.com)
+3. Tap "Auto-Recategorize All"
+4. AI will:
+   - Extract category structure from the website (or use predefined categories)
+   - Analyze all inventory items by name and description
+   - Automatically assign correct category AND subcategory to each item
+   - Apply all changes immediately
+
+**Supported Suppliers:**
+- **SnapAV/Snap One** - 18 main categories with 5-7 subcategories each:
+  - Control4 (Controllers, Keypads, Interfaces, Dimmers & Switches, etc.)
+  - Audio (Amplifiers, Receivers, Speakers, Subwoofers, etc.)
+  - Networking (Switches, Routers, Access Points, etc.)
+  - Surveillance (IP Cameras, NVRs, DVRs, etc.)
+  - And 14 more categories...
+- **Generic Categories** - For any other supplier
+
+**Features:**
+- **Fully Automatic** - No manual review needed, changes apply immediately
+- **Subcategory Support** - Items get both main category and precise subcategory
+- **Batch Processing** - Handles large inventories efficiently (20 items at a time)
+- **Real-time Progress** - See status updates as AI processes your items
+- **Smart Matching** - Uses GPT-4o-mini to analyze product names and descriptions
+
+**Best Use Cases:**
+- Just imported a large invoice or CSV and need to organize everything
+- Switching from one supplier's category system to another
+- Initial setup of inventory with proper categorization
+- Maintaining consistency across your entire inventory
 
 ## CSV/Excel Import
 

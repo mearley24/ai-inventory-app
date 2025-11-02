@@ -16,6 +16,7 @@ import InvoiceUploadScreen from "../screens/InvoiceUploadScreen";
 import InvoiceFolderScreen from "../screens/InvoiceFolderScreen";
 import DuplicateFinderScreen from "../screens/DuplicateFinderScreen";
 import RecategorizeScreen from "../screens/RecategorizeScreen";
+import DToolsImportScreen from "../screens/DToolsImportScreen";
 import AddPasswordScreen from "../screens/AddPasswordScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
@@ -174,6 +175,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Recategorize"
             component={RecategorizeScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="DToolsImport"
+            component={DToolsImportScreen}
             options={{ presentation: "modal" }}
           />
           <Stack.Screen

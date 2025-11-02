@@ -35,6 +35,7 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - **SnapAV/Snap One category system** (Control4, Audio, Cables, Networking, Surveillance, etc.)
 - **🎯 Subcategory Support** - Precise categorization (e.g., "Audio > Amplifiers", "Control4 > Controllers")
 - **🤖 AI-Powered Recategorization** - Automatically match items to correct categories & subcategories
+- **🔧 D-Tools Integration** - Import BOMs directly from D-Tools SI exports
 - **Bulk CSV/Excel import** for loading large price lists
 - **📄 AI-Powered Invoice Upload** - Scan/upload invoices (images & PDFs) to auto-populate inventory
 - **📁 Invoice Folder System** ⭐ NEW! - Drop invoices in a folder for automatic batch processing
@@ -122,6 +123,7 @@ src/
 │   ├── InvoiceUploadScreen.tsx  # AI invoice parsing
 │   ├── InvoiceFolderScreen.tsx  # Invoice folder management
 │   ├── RecategorizeScreen.tsx   # AI recategorization
+│   ├── DToolsImportScreen.tsx   # D-Tools BOM import
 │   ├── DuplicateFinderScreen.tsx # Duplicate item finder
 │   └── AddPasswordScreen.tsx    # Add new passwords
 ├── navigation/        # Navigation configuration
@@ -144,7 +146,8 @@ src/
 │   ├── invoiceScanner.ts        # Invoice folder scanning logic
 │   ├── invoiceScannerTask.ts    # Background task for hourly scans
 │   ├── recategorizer.ts         # AI recategorization with subcategories
-│   └── recategorizationTask.ts  # Background job system for recategorization
+│   ├── recategorizationTask.ts  # Background job system for recategorization
+│   └── dtoolsParser.ts          # D-Tools BOM parser
 ├── config/           # Configuration
 │   └── firebase.ts              # Firebase initialization
 └── utils/            # Utility functions
@@ -342,6 +345,60 @@ Assign inventory items to specific projects to track which products are allocate
 - Keeping client-specific inventory separate
 - Estimating job costs based on used inventory
 - Organizing multi-project workflows
+
+## D-Tools Integration ⭐ NEW!
+
+Import Bill of Materials (BOM) exports from D-Tools System Integrator (SI) with one tap.
+
+**How it Works:**
+1. Export your BOM from D-Tools SI as CSV or Excel
+2. In the app, tap "D-Tools" on the Inventory screen
+3. Select your D-Tools export file
+4. Review the parsed items and projects
+5. Tap "Import to Inventory"
+
+**What Gets Imported:**
+- **Inventory Items:**
+  - Product names (with manufacturer and model)
+  - Quantities from BOM
+  - Unit prices
+  - Categories (auto-mapped to app categories)
+  - Model numbers (stored as barcodes)
+  - Notes and descriptions
+
+- **Projects:**
+  - Automatically created from Location/Room fields
+  - Each project shows item count
+  - Color-coded for easy identification
+  - Ready for time tracking
+
+**Smart Features:**
+- **Category Mapping** - D-Tools categories automatically mapped to SnapAV categories
+- **Manufacturer Integration** - Combines manufacturer + model with product name
+- **Location-Based Projects** - Each unique location/room becomes a project
+- **Error Handling** - Shows warnings for any parsing issues
+- **Duplicate Prevention** - Works with existing duplicate detection
+
+**Supported D-Tools Columns:**
+- Item/Product Name (required)
+- Quantity
+- Unit Price/Cost
+- Category/Type/System
+- Location/Room/Area (for projects)
+- Manufacturer/Brand
+- Model/Part Number
+- Notes/Description
+
+**Perfect for:**
+- Quick import of entire project BOMs
+- Maintaining accurate inventory from D-Tools designs
+- Syncing quantities with D-Tools proposals
+- Creating projects from D-Tools locations
+- Eliminating manual data entry
+
+**File Formats:**
+- CSV (.csv)
+- Excel (.xlsx, .xls)
 
 ### Projects & Time Tracking
 Each project tracks:

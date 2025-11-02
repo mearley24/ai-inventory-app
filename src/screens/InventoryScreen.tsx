@@ -211,6 +211,20 @@ export default function InventoryScreen({ navigation }: any) {
           {/* Upload Options Row */}
           <View className="flex-row gap-2 mb-3">
             <Pressable
+              onPress={() => navigation.navigate("DToolsImport")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="construct" size={20} color="#10B981" />
+              <Text className="text-emerald-600 font-semibold ml-2">D-Tools</Text>
+            </Pressable>
+            <Pressable
               onPress={() => navigation.navigate("Import")}
               className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
               style={{
@@ -222,7 +236,7 @@ export default function InventoryScreen({ navigation }: any) {
               }}
             >
               <Ionicons name="cloud-upload" size={20} color="#4F46E5" />
-              <Text className="text-indigo-600 font-semibold ml-2">Import CSV</Text>
+              <Text className="text-indigo-600 font-semibold ml-2">CSV</Text>
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("InvoiceUpload")}

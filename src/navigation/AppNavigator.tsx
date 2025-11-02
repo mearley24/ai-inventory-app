@@ -11,6 +11,9 @@ import TimeTrackerScreen from "../screens/TimeTrackerScreen";
 import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
 import ImportScreen from "../screens/ImportScreen";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
+import { useAuthStore } from "../state/authStore";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -96,24 +99,42 @@ function TabNavigator() {
 }
 
 export default function AppNavigator() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const initializeAuth = useAuthStore((s) => s.initializeAuth);
+
+  React.useEffect(() => {
+    initializeAuth();
+  }, []);
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Main" component={TabNavigator} />
-      <Stack.Screen
-        name="AddItem"
-        component={AddItemScreen}
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="EditItem"
-        component={EditItemScreen}
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="Import"
-        component={ImportScreen}
-        options={{ presentation: "modal" }}
-      />
+      {!isAuthenticated ? (
+        // Auth Stack
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+        </>
+      ) : (
+        // App Stack
+        <>
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen
+            name="AddItem"
+            component={AddItemScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="EditItem"
+            component={EditItemScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="Import"
+            component={ImportScreen}
+            options={{ presentation: "modal" }}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 }

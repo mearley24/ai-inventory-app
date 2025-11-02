@@ -1,8 +1,16 @@
 # AI Inventory Tracker
 
-A beautiful, AI-powered inventory management app with barcode scanning and time tracking for projects.
+A beautiful, AI-powered inventory management app with barcode scanning, time tracking, and **multi-user team collaboration** built for SnapAV/Snap One professionals.
 
 ## Features
+
+### 👥 **Multi-User Authentication & Collaboration** ⭐ NEW!
+- Secure login with email/password via Firebase
+- Company-based account system
+- User roles: Owner, Admin, Manager, Field Worker
+- Team assignments for organizing field staff
+- Cloud-synced inventory (ready for implementation)
+- Persistent login across app restarts
 
 ### 🗂️ Inventory Management
 - View all inventory items in a clean, card-based interface
@@ -12,8 +20,9 @@ A beautiful, AI-powered inventory management app with barcode scanning and time 
 - Price tracking for each item
 - Delete items with a simple tap
 - Low stock alerts to keep track of inventory levels
-- Category-based organization (Electronics, Food, Clothing, Tools, Office, General)
+- **SnapAV/Snap One category system** (Control4, Audio, Cables, Networking, Surveillance, etc.)
 - **Bulk CSV/Excel import** for loading large price lists
+- Smart category matching during import
 
 ### 📷 Barcode Scanner
 - Fast, reliable barcode scanning using the device camera
@@ -63,10 +72,13 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 - **Framework:** React Native 0.76.7 with Expo SDK 53
 - **Navigation:** React Navigation with bottom tabs and native stack
 - **State Management:** Zustand with AsyncStorage persistence
+- **Authentication:** Firebase Auth with email/password
+- **Database:** Firestore (cloud-synced, ready for implementation)
 - **Styling:** NativeWind (TailwindCSS for React Native)
 - **Animations:** React Native Reanimated v3
 - **AI:** OpenAI GPT-4o-mini for product identification
 - **Camera:** Expo Camera for barcode scanning
+- **Excel/CSV:** XLSX library for file imports
 - **Icons:** Expo Vector Icons (Ionicons)
 
 ## Project Structure
@@ -75,6 +87,8 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 src/
 ├── components/         # Reusable components (future)
 ├── screens/           # All app screens
+│   ├── LoginScreen.tsx          # User login
+│   ├── RegisterScreen.tsx       # Company + user registration
 │   ├── InventoryScreen.tsx      # Main inventory list
 │   ├── ScannerScreen.tsx        # Barcode scanner
 │   ├── TimeTrackerScreen.tsx    # Time tracking
@@ -82,12 +96,18 @@ src/
 │   ├── EditItemScreen.tsx       # Edit existing items
 │   └── ImportScreen.tsx         # CSV/Excel import
 ├── navigation/        # Navigation configuration
-│   └── AppNavigator.tsx         # Tab and stack navigators
+│   └── AppNavigator.tsx         # Tab, stack, and auth navigators
 ├── state/            # Zustand stores
+│   ├── authStore.ts             # Authentication state
 │   ├── inventoryStore.ts        # Inventory state
 │   └── timeTrackerStore.ts      # Time tracking state
-└── types/            # TypeScript types
-    └── inventory.ts             # Data models
+├── types/            # TypeScript types
+│   ├── auth.ts                  # User, Company, Team types
+│   └── inventory.ts             # Inventory data models
+├── config/           # Configuration
+│   └── firebase.ts              # Firebase initialization
+└── utils/            # Utility functions
+    └── categories.ts            # SnapAV category matching
 ```
 
 ## Key Features Explained
@@ -149,21 +169,30 @@ The app uses Zustand with AsyncStorage to persist:
 
 ## Future Enhancements
 
+### Ready to Implement (Once Firebase is Configured):
+- **Real-time Cloud Sync**: Inventory syncs across all team members in real-time
+- **Team Management**: Create teams, invite users, assign roles
+- **User Management**: Admin dashboard to manage company users
+- **Offline Mode**: Work offline, sync when back online
+- **Activity Logs**: Track who added/modified inventory items
+
 ### Planned Features:
-- **Team Collaboration & Accounts**: Multi-user support with login system for teams to collaborate on jobs
 - Export inventory to CSV/PDF
 - Inventory analytics and charts
 - Photo capture for items
-- Bulk barcode scanning
+- Bulk barcode scanning mode
 - Time tracking reports and exports
 - Project analytics and insights
-- Cloud sync across devices
-- Role-based permissions for team members
+- Advanced role-based permissions
 - Job assignment and tracking
+- Push notifications for low stock
+- Barcode label printing
 
 ## Notes
 
 - The app is optimized for iOS
 - Requires camera permissions for barcode scanning
 - AI features require an OpenAI API key (pre-configured in Vibecode environment)
-- All data is stored locally on the device
+- **Authentication requires Firebase setup** - see [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for instructions
+- All data is stored locally until Firebase is configured for cloud sync
+- Built specifically for SnapAV/Snap One product categories

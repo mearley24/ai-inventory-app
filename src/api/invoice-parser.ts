@@ -1,11 +1,12 @@
 import * as FileSystem from "expo-file-system";
 import { ParsedInvoice } from "../types/inventory";
+import { getAnthropicClient } from "./anthropic";
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 
 /**
- * Parse an invoice image using GPT-4o Vision to extract line items
- * @param imageUri - Local file URI of the invoice image
+ * Parse an invoice image or PDF using AI to extract line items
+ * @param imageUri - Local file URI of the invoice image or PDF
  * @param mimeTypeHint - Optional MIME type hint from the picker
  * @returns ParsedInvoice with vendor info and line items
  */
@@ -18,14 +19,14 @@ export async function parseInvoiceImage(
     console.log("MIME type hint:", mimeTypeHint);
 
     // Check if this is a PDF file
-    if (
+    const isPDF =
       imageUri.toLowerCase().endsWith('.pdf') ||
       imageUri.includes('application/pdf') ||
-      mimeTypeHint === 'application/pdf'
-    ) {
-      throw new Error(
-        "PDF files are not supported yet. Please take a photo or screenshot of your invoice instead."
-      );
+      mimeTypeHint === 'application/pdf';
+
+    if (isPDF) {
+      console.log("Detected PDF, using Claude API");
+      return await parseInvoicePDF(imageUri);
     }
 
     // Get file info to determine the actual file type
@@ -134,12 +135,79 @@ export async function parseInvoiceImage(
 }
 
 /**
- * Convert PDF to images and parse (for multi-page invoices)
- * Note: This is a placeholder - PDF conversion would require additional library
- * For now, user should take photo/screenshot of invoice
+ * Parse PDF invoice using Claude API (supports PDFs natively)
+ * @param pdfUri - Local file URI of the PDF invoice
+ * @returns ParsedInvoice with vendor info and line items
  */
 export async function parseInvoicePDF(pdfUri: string): Promise<ParsedInvoice> {
-  throw new Error(
-    "PDF parsing not yet implemented. Please use an image of the invoice (photo or screenshot)."
-  );
+  try {
+    console.log("Parsing PDF invoice:", pdfUri);
+
+    // Get file info
+    const fileInfo = await FileSystem.getInfoAsync(pdfUri);
+    if (!fileInfo.exists) {
+      throw new Error("PDF file not found. Please try selecting the file again.");
+    }
+
+    // Read the PDF as base64
+    const base64PDF = await FileSystem.readAsStringAsync(pdfUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    console.log("PDF base64 length:", base64PDF.length);
+
+    // Use Claude API which supports PDFs natively
+    const anthropic = getAnthropicClient();
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "document",
+              source: {
+                type: "base64",
+                media_type: "application/pdf",
+                data: base64PDF,
+              },
+            },
+            {
+              type: "text",
+              text: 'Parse this invoice PDF and extract all line items. Return ONLY valid JSON in this exact format (no markdown, no code blocks): {"vendor": "string or null", "invoiceNumber": "string or null", "date": "string or null", "lineItems": [{"description": "string", "quantity": number, "unitPrice": number, "totalPrice": number, "sku": "string or null", "category": "string or null"}], "subtotal": number or null, "tax": number or null, "total": number or null}. Capture ALL rows from any product/line item tables. Use null for missing fields.',
+            },
+          ],
+        },
+      ],
+    });
+
+    // Extract the text content from Claude's response
+    const textContent = message.content.find((block) => block.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text response from Claude API");
+    }
+
+    let jsonText = textContent.text.trim();
+
+    // Remove markdown code blocks if present
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/```json\n?|\n?```/g, "").trim();
+    }
+
+    console.log("Claude response:", jsonText);
+
+    const parsedInvoice: ParsedInvoice = JSON.parse(jsonText);
+
+    // Validate that we got line items
+    if (!parsedInvoice.lineItems || parsedInvoice.lineItems.length === 0) {
+      throw new Error("No line items found in PDF invoice");
+    }
+
+    return parsedInvoice;
+  } catch (error) {
+    console.error("PDF parsing error:", error);
+    throw error;
+  }
 }

@@ -1,7 +1,7 @@
 import * as FileSystem from "expo-file-system";
 import { ParsedInvoice } from "../types/inventory";
 
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 
 /**
  * Parse an invoice image using GPT-4o Vision to extract line items

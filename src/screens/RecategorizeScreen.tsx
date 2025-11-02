@@ -6,13 +6,14 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useInventoryStore } from "../state/inventoryStore";
-import { recategorizeItems } from "../services/recategorizer";
+import { recategorizeItems, extractCategoriesFromWebsite } from "../services/recategorizer";
 import { safeGoBack } from "../utils/navigation";
 
 type Props = {
@@ -23,6 +24,8 @@ export default function RecategorizeScreen({ navigation }: Props) {
   const items = useInventoryStore((s) => s.items);
   const bulkUpdateCategories = useInventoryStore((s) => s.bulkUpdateCategories);
 
+  const [websiteUrl, setWebsiteUrl] = useState("https://www.snapav.com");
+  const [categories, setCategories] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState("");
   const [results, setResults] = useState<
@@ -35,27 +38,57 @@ export default function RecategorizeScreen({ navigation }: Props) {
       return;
     }
 
+    if (!websiteUrl.trim()) {
+      Alert.alert("Website Required", "Please enter a website URL");
+      return;
+    }
+
     Alert.alert(
       "Recategorize All Items",
-      `This will use AI to analyze all ${items.length} items and update their categories to match SnapAV categories.\n\nContinue?`,
+      `This will:\n1. Extract categories from ${websiteUrl}\n2. Analyze all ${items.length} items\n3. Auto-update categories to match website\n\nContinue?`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Start",
           onPress: async () => {
             setProcessing(true);
-            setProgress("Starting...");
+            setProgress("Extracting categories from website...");
             setResults([]);
 
             try {
-              const changes = await recategorizeItems(items, (msg, current, total) => {
-                setProgress(msg);
-              });
+              // Step 1: Extract categories from website
+              const extractedCategories = await extractCategoriesFromWebsite(websiteUrl);
+              setCategories(extractedCategories);
+              setProgress(`Found ${extractedCategories.length} categories`);
+
+              // Step 2: Recategorize items
+              const changes = await recategorizeItems(
+                items,
+                extractedCategories,
+                (msg: string, current: number, total: number) => {
+                  setProgress(msg);
+                }
+              );
 
               setResults(changes);
-              setProgress(`Complete! Found ${changes.length} items to recategorize`);
 
-              if (changes.length === 0) {
+              // Step 3: Auto-apply changes
+              if (changes.length > 0) {
+                const updates = changes.map((r) => ({
+                  id: r.id,
+                  category: r.newCategory,
+                }));
+
+                bulkUpdateCategories(updates);
+
+                setProgress(`Complete! Updated ${changes.length} items`);
+                Alert.alert(
+                  "Success!",
+                  `✅ Extracted ${extractedCategories.length} categories\n✅ Updated ${changes.length} items automatically\n\nAll items now match website categories!`,
+                  [{ text: "OK", onPress: () => safeGoBack(navigation) }]
+                );
+              } else {
+                setProgress("Complete! All items already in correct categories");
                 Alert.alert(
                   "No Changes Needed",
                   "All items are already in the correct categories!",
@@ -78,60 +111,6 @@ export default function RecategorizeScreen({ navigation }: Props) {
         },
       ]
     );
-  };
-
-  const handleApplyChanges = () => {
-    if (results.length === 0) return;
-
-    Alert.alert(
-      "Apply Changes",
-      `Update ${results.length} ${results.length === 1 ? "item" : "items"} to new categories?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Apply",
-          onPress: () => {
-            const updates = results.map((r) => ({
-              id: r.id,
-              category: r.newCategory,
-            }));
-
-            bulkUpdateCategories(updates);
-
-            Alert.alert(
-              "Success",
-              `Updated ${results.length} ${results.length === 1 ? "item" : "items"}!`,
-              [{ text: "OK", onPress: () => safeGoBack(navigation) }]
-            );
-          },
-        },
-      ]
-    );
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      Control4: "bg-blue-100",
-      Audio: "bg-purple-100",
-      "Bulk Wire & Connectors": "bg-orange-100",
-      Cables: "bg-yellow-100",
-      Conferencing: "bg-green-100",
-      Control: "bg-indigo-100",
-      Lighting: "bg-amber-100",
-      "Media Distribution": "bg-pink-100",
-      Mounts: "bg-gray-100",
-      Networking: "bg-cyan-100",
-      Power: "bg-red-100",
-      "Projectors & Screens": "bg-violet-100",
-      Racks: "bg-slate-100",
-      "Smart Security & Access": "bg-emerald-100",
-      Speakers: "bg-fuchsia-100",
-      Surveillance: "bg-rose-100",
-      Televisions: "bg-sky-100",
-      "Tools & Hardware": "bg-stone-100",
-      Other: "bg-neutral-100",
-    };
-    return colors[category] || "bg-neutral-100";
   };
 
   return (
@@ -165,15 +144,34 @@ export default function RecategorizeScreen({ navigation }: Props) {
               />
               <View className="flex-1">
                 <Text className="text-white text-base font-semibold mb-2">
-                  AI-Powered Recategorization
+                  Automatic Recategorization
                 </Text>
                 <Text className="text-white/90 text-sm leading-5">
-                  This tool uses AI to analyze all your inventory items and
-                  assign them to the correct SnapAV product categories based on
-                  their names and descriptions.
+                  Enter any supplier website URL. AI will extract categories and
+                  automatically update all your inventory to match.
                 </Text>
               </View>
             </View>
+          </View>
+
+          {/* Website URL Input */}
+          <View className="bg-white/20 rounded-2xl p-4 mb-4">
+            <Text className="text-white text-sm font-semibold mb-2">
+              Supplier Website
+            </Text>
+            <TextInput
+              value={websiteUrl}
+              onChangeText={setWebsiteUrl}
+              placeholder="https://www.example.com"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              className="bg-white/30 rounded-xl px-4 py-3 text-white text-base"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+            <Text className="text-white/70 text-xs mt-2">
+              Examples: snapav.com, adorama.com, bhphotovideo.com
+            </Text>
           </View>
 
           {/* Stats */}
@@ -184,9 +182,14 @@ export default function RecategorizeScreen({ navigation }: Props) {
             <Text className="text-white/90 text-sm">
               Total Items: {items.length}
             </Text>
+            {categories.length > 0 && (
+              <Text className="text-white/90 text-sm">
+                Categories Found: {categories.length}
+              </Text>
+            )}
             {results.length > 0 && (
               <Text className="text-white/90 text-sm">
-                Changes Found: {results.length}
+                Items Updated: {results.length}
               </Text>
             )}
           </View>
@@ -199,10 +202,10 @@ export default function RecategorizeScreen({ navigation }: Props) {
             >
               <Ionicons name="refresh" size={32} color="#8b5cf6" />
               <Text className="text-purple-600 text-lg font-semibold mt-2">
-                Start Recategorization
+                Auto-Recategorize All
               </Text>
               <Text className="text-gray-600 text-sm mt-1">
-                Analyze all {items.length} items
+                Extract categories and update all {items.length} items
               </Text>
             </Pressable>
           )}
@@ -217,64 +220,25 @@ export default function RecategorizeScreen({ navigation }: Props) {
             </View>
           )}
 
-          {/* Results */}
+          {/* Success Message */}
           {!processing && results.length > 0 && (
-            <>
+            <View className="bg-green-100 rounded-2xl p-6 items-center mb-4">
+              <Ionicons name="checkmark-circle" size={64} color="#10B981" />
+              <Text className="text-green-800 text-lg font-semibold mt-4">
+                Successfully Updated!
+              </Text>
+              <Text className="text-green-700 text-sm mt-2 text-center">
+                {results.length} items have been automatically recategorized to match the website.
+              </Text>
               <Pressable
-                onPress={handleApplyChanges}
-                className="bg-white rounded-2xl p-4 items-center mb-4"
+                onPress={() => safeGoBack(navigation)}
+                className="bg-green-600 rounded-xl px-6 py-3 mt-4"
               >
-                <Text className="text-purple-600 text-lg font-semibold">
-                  Apply Changes ({results.length})
-                </Text>
-                <Text className="text-gray-600 text-sm mt-1">
-                  Update categories for all items
+                <Text className="text-white font-semibold">
+                  Done
                 </Text>
               </Pressable>
-
-              <Text className="text-white text-lg font-semibold mb-3">
-                Suggested Changes ({results.length})
-              </Text>
-
-              {results.map((result, index) => {
-                const item = items.find((i) => i.id === result.id);
-                if (!item) return null;
-
-                return (
-                  <View
-                    key={index}
-                    className="bg-white/20 rounded-xl p-4 mb-3"
-                  >
-                    <Text className="text-white text-base font-semibold mb-2">
-                      {item.name}
-                    </Text>
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-1 mr-2">
-                        <Text className="text-white/70 text-xs mb-1">From:</Text>
-                        <View
-                          className={`${getCategoryColor(result.oldCategory)} rounded-lg px-3 py-2`}
-                        >
-                          <Text className="text-gray-800 text-sm font-medium">
-                            {result.oldCategory}
-                          </Text>
-                        </View>
-                      </View>
-                      <Ionicons name="arrow-forward" size={20} color="white" />
-                      <View className="flex-1 ml-2">
-                        <Text className="text-white/70 text-xs mb-1">To:</Text>
-                        <View
-                          className={`${getCategoryColor(result.newCategory)} rounded-lg px-3 py-2`}
-                        >
-                          <Text className="text-gray-800 text-sm font-medium">
-                            {result.newCategory}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
-            </>
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>

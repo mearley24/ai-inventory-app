@@ -7,6 +7,7 @@ import { usePasswordVaultStore } from "../state/passwordVaultStore";
 import { useAuthStore } from "../state/authStore";
 import { PasswordCategory } from "../types/password";
 import { generateSecurePassword } from "../utils/encryption";
+import { safeGoBack } from "../utils/navigation";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 const CATEGORIES: PasswordCategory[] = [
@@ -69,7 +70,7 @@ export default function AddPasswordScreen({ navigation }: any) {
         allowedRoles: [user.role],
       });
 
-      navigation.goBack();
+      safeGoBack(navigation);
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to save password");
       setSaving(false);
@@ -84,7 +85,7 @@ export default function AddPasswordScreen({ navigation }: any) {
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable onPress={() => safeGoBack(navigation)}>
             <Ionicons name="close" size={28} color="#1F2937" />
           </Pressable>
           <Text className="text-xl font-bold text-neutral-900">Add Password</Text>

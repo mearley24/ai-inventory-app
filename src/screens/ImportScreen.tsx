@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system";
 import * as XLSX from "xlsx";
 import { useInventoryStore } from "../state/inventoryStore";
 import { matchCategory } from "../utils/categories";
+import { safeGoBack } from "../utils/navigation";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
 export default function ImportScreen({ navigation }: any) {
@@ -215,7 +216,7 @@ export default function ImportScreen({ navigation }: any) {
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable onPress={() => safeGoBack(navigation)}>
             <Ionicons name="arrow-back" size={28} color="#1F2937" />
           </Pressable>
           <Text className="text-xl font-bold text-neutral-900">Import Items</Text>

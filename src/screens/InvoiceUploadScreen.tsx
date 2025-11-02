@@ -15,6 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { parseInvoiceImage } from "../api/invoice-parser";
+import { safeGoBack } from "../utils/navigation";
 import { useInventoryStore } from "../state/inventoryStore";
 import { matchCategory } from "../utils/categories";
 import type { ParsedInvoice, InvoiceLineItem } from "../types/inventory";
@@ -148,7 +149,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
       [
         {
           text: "OK",
-          onPress: () => navigation.goBack(),
+          onPress: () => safeGoBack(navigation),
         },
       ]
     );
@@ -162,7 +163,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
         <View className="flex-row items-center justify-between px-6 py-4">
           <Pressable
-            onPress={() => navigation.goBack()}
+            onPress={() => safeGoBack(navigation)}
             className="w-10 h-10 items-center justify-center"
           >
             <Ionicons name="arrow-back" size={24} color="white" />

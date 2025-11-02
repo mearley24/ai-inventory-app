@@ -16,6 +16,7 @@ interface InventoryState {
   getStarredLowStockItems: () => InventoryItem[];
   findDuplicates: () => InventoryItem[][];
   mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => void;
+  autoMergeAllDuplicates: () => { merged: number; removed: number };
 }
 
 export const useInventoryStore = create<InventoryState>()(
@@ -124,6 +125,48 @@ export const useInventoryStore = create<InventoryState>()(
                 : item
             ),
         }));
+      },
+
+      autoMergeAllDuplicates: () => {
+        const duplicateGroups = get().findDuplicates();
+        let mergedCount = 0;
+        let removedCount = 0;
+
+        if (duplicateGroups.length === 0) {
+          return { merged: 0, removed: 0 };
+        }
+
+        // Process each duplicate group
+        const itemsToKeep = new Set<string>();
+        const itemsToRemove = new Set<string>();
+
+        duplicateGroups.forEach((group) => {
+          // Keep the first item in the group (or the one with barcode if available)
+          const keepItem = group.find((item) => item.barcode) || group[0];
+          itemsToKeep.add(keepItem.id);
+          mergedCount++;
+
+          // Mark other items for removal
+          group.forEach((item) => {
+            if (item.id !== keepItem.id) {
+              itemsToRemove.add(item.id);
+              removedCount++;
+            }
+          });
+        });
+
+        // Update state: remove duplicates and set all quantities to 0
+        set((state) => ({
+          items: state.items
+            .filter((item) => !itemsToRemove.has(item.id))
+            .map((item) => ({
+              ...item,
+              quantity: 0,
+              updatedAt: Date.now(),
+            })),
+        }));
+
+        return { merged: mergedCount, removed: removedCount };
       },
     }),
     {

@@ -11,6 +11,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 export default function DuplicateFinderScreen({ navigation }: any) {
   const findDuplicates = useInventoryStore((s) => s.findDuplicates);
   const mergeDuplicates = useInventoryStore((s) => s.mergeDuplicates);
+  const autoMergeAllDuplicates = useInventoryStore((s) => s.autoMergeAllDuplicates);
 
   const [duplicateGroups, setDuplicateGroups] = React.useState<InventoryItem[][]>([]);
   const [selectedGroups, setSelectedGroups] = React.useState<{ [key: number]: string }>({});
@@ -19,6 +20,30 @@ export default function DuplicateFinderScreen({ navigation }: any) {
     const groups = findDuplicates();
     setDuplicateGroups(groups);
   }, []);
+
+  const handleAutoMergeAll = () => {
+    const dupCount = duplicateGroups.length;
+
+    Alert.alert(
+      "Auto Merge All Duplicates",
+      `This will:\n• Merge ${dupCount} duplicate ${dupCount === 1 ? "group" : "groups"}\n• Keep one item per group\n• Set ALL inventory quantities to 0\n\nContinue?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Merge All",
+          style: "destructive",
+          onPress: () => {
+            const result = autoMergeAllDuplicates();
+            Alert.alert(
+              "Success!",
+              `✅ Merged ${result.merged} groups\n✅ Removed ${result.removed} duplicate items\n✅ All quantities set to 0`,
+              [{ text: "OK", onPress: () => safeGoBack(navigation) }]
+            );
+          },
+        },
+      ]
+    );
+  };
 
   const handleMerge = (groupIndex: number, group: InventoryItem[]) => {
     const keepItemId = selectedGroups[groupIndex];
@@ -184,8 +209,28 @@ export default function DuplicateFinderScreen({ navigation }: any) {
                 Found {duplicateGroups.length} duplicate {duplicateGroups.length === 1 ? "group" : "groups"}
               </Text>
               <Text className="text-white/70 text-sm mt-1">
-                Select which item to keep, then merge to combine quantities
+                Tap &ldquo;Auto Merge&rdquo; to merge all duplicates and reset quantities to 0
               </Text>
+
+              {/* Auto Merge All Button */}
+              <Pressable
+                onPress={handleAutoMergeAll}
+                className="bg-white rounded-xl mt-4 overflow-hidden"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 5,
+                }}
+              >
+                <View className="flex-row items-center justify-center px-6 py-4">
+                  <Ionicons name="flash" size={20} color="#EA580C" />
+                  <Text className="text-orange-600 font-bold text-base ml-2">
+                    Auto Merge All & Reset to Zero
+                  </Text>
+                </View>
+              </Pressable>
             </View>
 
             <FlatList

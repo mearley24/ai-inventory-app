@@ -28,18 +28,30 @@ const CATEGORIES = [
 ];
 
 export default function EditItemScreen({ navigation, route }: any) {
-  const { item } = route.params;
+  const { item } = route.params || {};
   const updateItem = useInventoryStore((s) => s.updateItem);
 
-  const [name, setName] = React.useState(item.name);
-  const [quantity, setQuantity] = React.useState(item.quantity.toString());
-  const [price, setPrice] = React.useState(item.price?.toString() || "");
-  const [category, setCategory] = React.useState(item.category);
-  const [description, setDescription] = React.useState(item.description || "");
+  // If no item provided, go back immediately
+  React.useEffect(() => {
+    if (!item) {
+      navigation.goBack();
+    }
+  }, [item, navigation]);
+
+  const [name, setName] = React.useState(item?.name || "");
+  const [quantity, setQuantity] = React.useState(item?.quantity?.toString() || "0");
+  const [price, setPrice] = React.useState(item?.price?.toString() || "");
+  const [category, setCategory] = React.useState(item?.category || "Other");
+  const [description, setDescription] = React.useState(item?.description || "");
   const [lowStockThreshold, setLowStockThreshold] = React.useState(
-    item.lowStockThreshold?.toString() || ""
+    item?.lowStockThreshold?.toString() || ""
   );
-  const [isStarred, setIsStarred] = React.useState(item.isStarred || false);
+  const [isStarred, setIsStarred] = React.useState(item?.isStarred || false);
+
+  // Safety check
+  if (!item) {
+    return null;
+  }
 
   const handleSave = () => {
     if (!name.trim()) {

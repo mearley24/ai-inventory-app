@@ -1,6 +1,8 @@
 import * as FileSystem from "expo-file-system";
 import { parseInvoiceImage } from "../api/invoice-parser";
 import { useInventoryStore } from "../state/inventoryStore";
+import { useInvoiceMetadataStore } from "../state/invoiceMetadataStore";
+import { useAuthStore } from "../state/authStore";
 import { matchCategory } from "../utils/categories";
 
 // Define the invoice folder path
@@ -135,15 +137,22 @@ export async function scanAndParseInvoices(
 
     onProgress?.(`Found ${files.length} invoice files`);
 
-    // Get the addItems function from the store
+    // Get functions from stores
     const addItems = useInventoryStore.getState().addItems;
+    const markInvoiceAsProcessed = useInvoiceMetadataStore.getState().markInvoiceAsProcessed;
+    const isInvoiceProcessed = useInvoiceMetadataStore.getState().isInvoiceProcessed;
+    const user = useAuthStore.getState().user;
+
+    if (!user) {
+      throw new Error("User not logged in");
+    }
 
     for (let i = 0; i < files.length; i++) {
       const filename = files[i];
       const filePath = `${INVOICE_FOLDER_PATH}${filename}`;
 
-      // Skip if already processed
-      if (processedFiles.has(filename)) {
+      // Skip if already processed (check both local memory and Firebase)
+      if (processedFiles.has(filename) || isInvoiceProcessed(filename)) {
         results.skipped++;
         onProgress?.(`Skipping ${filename} (already processed)`);
         continue;
@@ -167,12 +176,17 @@ export async function scanAndParseInvoices(
           description: `From ${parsed.vendor || "invoice"} - Invoice #${parsed.invoiceNumber || "N/A"}`,
         }));
 
-        addItems(itemsToAdd);
+        await addItems(itemsToAdd);
         results.newItems += itemsToAdd.length;
         results.processed++;
 
-        // Mark as processed
+        // Mark as processed in both local memory and Firebase
         markFileAsProcessed(filename);
+        await markInvoiceAsProcessed(filename, user.uid, itemsToAdd.length, {
+          vendor: parsed.vendor,
+          invoiceNumber: parsed.invoiceNumber,
+          total: parsed.total,
+        });
 
         onProgress?.(
           `✓ Parsed ${filename}: ${itemsToAdd.length} items added`

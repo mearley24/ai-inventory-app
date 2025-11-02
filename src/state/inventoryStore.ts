@@ -47,6 +47,34 @@ export const useInventoryStore = create<InventoryState>()(
       currentCompanyId: null,
 
       initializeSync: (companyId: string) => {
+        // First, migrate any existing items that don't have a companyId
+        const existingItems = get().items;
+        const itemsToMigrate = existingItems.filter((item) => !item.companyId);
+
+        if (itemsToMigrate.length > 0) {
+          console.log(`Migrating ${itemsToMigrate.length} items to Firestore with companyId...`);
+
+          // Add companyId to existing items and upload to Firestore
+          Promise.all(
+            itemsToMigrate.map(async (item) => {
+              const updatedItem = { ...item, companyId };
+              await setDoc(doc(firestore, "inventory", item.id), updatedItem);
+            })
+          ).then(() => {
+            console.log("Migration complete!");
+          }).catch((error) => {
+            console.error("Migration error:", error);
+          });
+
+          // Update local state with companyId
+          set((state) => ({
+            items: state.items.map((item) =>
+              !item.companyId ? { ...item, companyId } : item
+            ),
+          }));
+        }
+
+        // Set up real-time listener
         const itemsRef = collection(firestore, "inventory");
         const q = query(itemsRef, where("companyId", "==", companyId));
 

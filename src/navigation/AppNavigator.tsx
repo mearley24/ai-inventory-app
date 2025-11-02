@@ -12,6 +12,7 @@ import PasswordVaultScreen from "../screens/PasswordVaultScreen";
 import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
 import ImportScreen from "../screens/ImportScreen";
+import InvoiceUploadScreen from "../screens/InvoiceUploadScreen";
 import AddPasswordScreen from "../screens/AddPasswordScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
@@ -140,6 +141,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Import"
             component={ImportScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="InvoiceUpload"
+            component={InvoiceUploadScreen}
             options={{ presentation: "modal" }}
           />
           <Stack.Screen

@@ -39,6 +39,7 @@ export default function EditItemScreen({ navigation, route }: any) {
   const [lowStockThreshold, setLowStockThreshold] = React.useState(
     item.lowStockThreshold?.toString() || ""
   );
+  const [isStarred, setIsStarred] = React.useState(item.isStarred || false);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -52,6 +53,7 @@ export default function EditItemScreen({ navigation, route }: any) {
       category,
       description: description.trim() || undefined,
       lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold) : undefined,
+      isStarred,
     });
 
     navigation.goBack();
@@ -263,6 +265,55 @@ export default function EditItemScreen({ navigation, route }: any) {
                   elevation: 1,
                 }}
               />
+            </View>
+
+            {/* Favorite/Starred Toggle */}
+            <View className="mb-6">
+              <Text className="text-sm font-semibold text-neutral-700 mb-2">
+                Mark as Favorite
+              </Text>
+              <Text className="text-xs text-neutral-500 mb-3">
+                Get low stock alerts for favorite items
+              </Text>
+              <Pressable
+                onPress={() => setIsStarred(!isStarred)}
+                className={`flex-row items-center justify-between px-4 py-4 rounded-xl ${
+                  isStarred ? "bg-amber-50" : "bg-white"
+                }`}
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              >
+                <View className="flex-row items-center">
+                  <Ionicons
+                    name={isStarred ? "star" : "star-outline"}
+                    size={24}
+                    color="#F59E0B"
+                  />
+                  <Text
+                    className={`ml-3 text-base font-medium ${
+                      isStarred ? "text-amber-700" : "text-neutral-700"
+                    }`}
+                  >
+                    {isStarred ? "Favorite Item" : "Add to Favorites"}
+                  </Text>
+                </View>
+                <View
+                  className={`w-12 h-7 rounded-full ${
+                    isStarred ? "bg-amber-500" : "bg-neutral-300"
+                  } justify-center`}
+                >
+                  <View
+                    className={`w-5 h-5 rounded-full bg-white ${
+                      isStarred ? "ml-6" : "ml-1"
+                    }`}
+                  />
+                </View>
+              </Pressable>
             </View>
           </Animated.View>
         </ScrollView>

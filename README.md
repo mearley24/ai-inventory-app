@@ -24,13 +24,16 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 ### 🗂️ Inventory Management
 - View all inventory items in a clean, card-based interface
 - Search and filter items by name, description, and category
+- **⭐ Star favorite/everyday items** for quick access and alerts
 - Add items manually or through barcode scanning
 - Edit item details with intuitive +/- quantity controls
 - Price tracking for each item
 - Delete items with a simple tap
-- Low stock alerts to keep track of inventory levels
+- **Low stock alerts** to keep track of inventory levels
+- **Special alerts for starred items** - get notified when everyday items run low
 - **SnapAV/Snap One category system** (Control4, Audio, Cables, Networking, Surveillance, etc.)
 - **Bulk CSV/Excel import** for loading large price lists
+- **📄 AI-Powered Invoice Upload** ⭐ NEW! - Scan/upload invoices to auto-populate inventory
 - Smart category matching during import
 
 ### 📷 Barcode Scanner
@@ -52,6 +55,8 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 
 ### 🤖 AI Features
 - Smart product identification from barcodes
+- **AI-powered invoice parsing** using GPT-4o Vision
+- Extract line items automatically from invoice photos
 - Automatic category suggestions
 - Context-aware item naming
 
@@ -85,8 +90,9 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 - **Database:** Firestore (cloud-synced, ready for implementation)
 - **Styling:** NativeWind (TailwindCSS for React Native)
 - **Animations:** React Native Reanimated v3
-- **AI:** OpenAI GPT-4o-mini for product identification
+- **AI:** OpenAI GPT-4o for invoice parsing, GPT-4o-mini for product identification
 - **Camera:** Expo Camera for barcode scanning
+- **Image Picker:** Expo Image Picker for invoice photos
 - **Excel/CSV:** XLSX library for file imports
 - **Icons:** Expo Vector Icons (Ionicons)
 
@@ -101,22 +107,33 @@ src/
 │   ├── InventoryScreen.tsx      # Main inventory list
 │   ├── ScannerScreen.tsx        # Barcode scanner
 │   ├── TimeTrackerScreen.tsx    # Time tracking
+│   ├── PasswordVaultScreen.tsx  # Password management
 │   ├── AddItemScreen.tsx        # Add new items
 │   ├── EditItemScreen.tsx       # Edit existing items
-│   └── ImportScreen.tsx         # CSV/Excel import
+│   ├── ImportScreen.tsx         # CSV/Excel import
+│   ├── InvoiceUploadScreen.tsx  # AI invoice parsing
+│   └── AddPasswordScreen.tsx    # Add new passwords
 ├── navigation/        # Navigation configuration
 │   └── AppNavigator.tsx         # Tab, stack, and auth navigators
 ├── state/            # Zustand stores
 │   ├── authStore.ts             # Authentication state
 │   ├── inventoryStore.ts        # Inventory state
+│   ├── passwordVaultStore.ts    # Password vault state
 │   └── timeTrackerStore.ts      # Time tracking state
 ├── types/            # TypeScript types
 │   ├── auth.ts                  # User, Company, Team types
-│   └── inventory.ts             # Inventory data models
+│   ├── inventory.ts             # Inventory & invoice data models
+│   └── password.ts              # Password vault types
+├── api/              # API integrations
+│   ├── invoice-parser.ts        # GPT-4o Vision invoice parsing
+│   ├── openai.ts                # OpenAI client
+│   ├── anthropic.ts             # Anthropic client
+│   └── chat-service.ts          # LLM text generation
 ├── config/           # Configuration
 │   └── firebase.ts              # Firebase initialization
 └── utils/            # Utility functions
-    └── categories.ts            # SnapAV category matching
+    ├── categories.ts            # SnapAV category matching
+    └── encryption.ts            # Password encryption/decryption
 ```
 
 ## Key Features Explained
@@ -131,7 +148,39 @@ Each inventory item includes:
 - Category
 - Description (optional)
 - Low stock threshold (optional)
+- **Starred/Favorite flag** (for everyday items)
 - Creation and update timestamps
+
+## AI-Powered Invoice Upload ⭐ NEW!
+
+Automatically populate inventory from invoice photos using GPT-4o Vision:
+
+**How it Works:**
+1. Tap the "Invoice" button in the Inventory screen
+2. Take a photo of an invoice or select from your library
+3. AI parses the invoice and extracts all line items with:
+   - Product descriptions
+   - Quantities
+   - Unit prices
+   - Total prices
+   - SKU/barcode numbers
+4. Review extracted items (all selected by default)
+5. Tap items to deselect any you don't want to import
+6. Tap "Add to Inventory" to import selected items
+
+**Features:**
+- Works with photos or screenshots of invoices
+- Extracts vendor name, invoice number, date, and totals
+- Handles complex invoice layouts with multiple line items
+- Smart category matching to SnapAV categories
+- Select/deselect items before importing
+- Preserves pricing and quantity information
+
+**Best Practices:**
+- Take clear, well-lit photos of invoices
+- Ensure all text is readable
+- Works best with standard invoice formats
+- Supports SnapAV and major distributor invoices
 
 ## CSV/Excel Import
 
@@ -152,6 +201,33 @@ The app includes a powerful import feature to load large price lists quickly:
 - Barcode, SKU, UPC (for barcodes)
 
 The import parser is flexible and will recognize common variations of these column names.
+
+## Starred Items & Low Stock Alerts ⭐ NEW!
+
+**Mark Everyday Items as Favorites:**
+- Star frequently used items like cables, connectors, and common components
+- Quick filter to view only starred items
+- Visual star indicator on inventory cards
+
+**Smart Low Stock Alerts:**
+- Set custom low stock thresholds for any item
+- **Automatic alerts for starred items** when they run low
+- Alert badge shows count of starred items needing restock
+- Get notified when opening the app if favorites are low
+- Perfect for tracking everyday items that need consistent restocking
+
+**How to Use:**
+1. Edit any item and toggle "Mark as Favorite"
+2. Set a low stock threshold (e.g., alert when below 10)
+3. App automatically alerts you when starred items hit threshold
+4. Use the star filter to quickly check your everyday items
+5. Star icon appears on item cards for quick identification
+
+This feature is essential for field techs who need to maintain stock of common items like:
+- Wire and connectors
+- Mounting hardware
+- Common cables
+- Frequently replaced components
 
 ### Projects & Time Tracking
 Each project tracks:

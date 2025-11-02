@@ -8,6 +8,7 @@ export interface InventoryItem {
   description?: string;
   imageUrl?: string;
   lowStockThreshold?: number;
+  isStarred?: boolean; // Favorite/everyday items
   createdAt: number;
   updatedAt: number;
 }
@@ -32,4 +33,23 @@ export interface TimeEntry {
 export interface ActiveTimer {
   projectId: string;
   startTime: number;
+}
+
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  sku?: string;
+  category?: string;
+}
+
+export interface ParsedInvoice {
+  vendor?: string;
+  invoiceNumber?: string;
+  date?: string;
+  lineItems: InvoiceLineItem[];
+  subtotal?: number;
+  tax?: number;
+  total?: number;
 }

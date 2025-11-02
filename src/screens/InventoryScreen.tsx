@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
+import { View, Text, ScrollView, Pressable, TextInput, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
@@ -9,18 +9,34 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 export default function InventoryScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [showOnlyStarred, setShowOnlyStarred] = React.useState(false);
   const items = useInventoryStore((s) => s.items);
   const deleteItem = useInventoryStore((s) => s.deleteItem);
+  const toggleStarred = useInventoryStore((s) => s.toggleStarred);
   const getLowStockItems = useInventoryStore((s) => s.getLowStockItems);
+  const getStarredLowStockItems = useInventoryStore((s) => s.getStarredLowStockItems);
 
   const categories = ["All", ...Array.from(new Set(items.map((item) => item.category)))];
   const lowStockItems = getLowStockItems();
+  const starredLowStockItems = getStarredLowStockItems();
+
+  // Show low stock alert for starred items on mount
+  React.useEffect(() => {
+    if (starredLowStockItems.length > 0) {
+      Alert.alert(
+        "Low Stock Alert",
+        `${starredLowStockItems.length} starred ${starredLowStockItems.length === 1 ? "item is" : "items are"} running low:\n\n${starredLowStockItems.map(item => `• ${item.name} (${item.quantity} left)`).join("\n")}`,
+        [{ text: "OK" }]
+      );
+    }
+  }, []);
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesStarred = !showOnlyStarred || item.isStarred;
+    return matchesSearch && matchesCategory && matchesStarred;
   });
 
   const isLowStock = (item: InventoryItem) => {
@@ -36,17 +52,36 @@ export default function InventoryScreen({ navigation }: any) {
             <View className="flex-1">
               <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
             </View>
-            <Pressable
-              onPress={() => navigation.navigate("Import")}
-              className="bg-indigo-100 rounded-full px-4 py-2 flex-row items-center"
-            >
-              <Ionicons name="cloud-upload" size={16} color="#4F46E5" />
-              <Text className="text-indigo-600 font-semibold ml-2">Import</Text>
-            </Pressable>
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={() => navigation.navigate("Import")}
+                className="bg-indigo-100 rounded-full px-4 py-2 flex-row items-center"
+              >
+                <Ionicons name="cloud-upload" size={16} color="#4F46E5" />
+                <Text className="text-indigo-600 font-semibold ml-2">CSV</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate("InvoiceUpload")}
+                className="bg-purple-100 rounded-full px-4 py-2 flex-row items-center"
+              >
+                <Ionicons name="receipt" size={16} color="#7C3AED" />
+                <Text className="text-purple-600 font-semibold ml-2">Invoice</Text>
+              </Pressable>
+            </View>
           </View>
-          <Text className="text-base text-neutral-500">
-            {items.length} items • {lowStockItems.length} low stock
-          </Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-neutral-500">
+              {items.length} items • {lowStockItems.length} low stock
+            </Text>
+            {starredLowStockItems.length > 0 && (
+              <View className="bg-amber-100 rounded-full px-3 py-1 flex-row items-center">
+                <Ionicons name="warning" size={14} color="#F59E0B" />
+                <Text className="text-amber-700 font-semibold text-xs ml-1">
+                  {starredLowStockItems.length} starred low
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Search Bar */}
@@ -66,6 +101,36 @@ export default function InventoryScreen({ navigation }: any) {
               </Pressable>
             )}
           </View>
+        </View>
+
+        {/* Filter Buttons */}
+        <View className="px-6 mb-4 flex-row gap-2">
+          <Pressable
+            onPress={() => setShowOnlyStarred(!showOnlyStarred)}
+            className={`px-4 py-2 rounded-full flex-row items-center ${
+              showOnlyStarred ? "bg-amber-500" : "bg-white"
+            }`}
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 1,
+            }}
+          >
+            <Ionicons
+              name={showOnlyStarred ? "star" : "star-outline"}
+              size={16}
+              color={showOnlyStarred ? "white" : "#F59E0B"}
+            />
+            <Text
+              className={`font-medium ml-1 ${
+                showOnlyStarred ? "text-white" : "text-amber-600"
+              }`}
+            >
+              Favorites
+            </Text>
+          </Pressable>
         </View>
 
         {/* Category Filter */}
@@ -149,9 +214,14 @@ export default function InventoryScreen({ navigation }: any) {
 
                   {/* Content */}
                   <View className="flex-1 ml-4">
-                    <Text className="text-lg font-semibold text-neutral-900">
-                      {item.name}
-                    </Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-lg font-semibold text-neutral-900 flex-1">
+                        {item.name}
+                      </Text>
+                      {item.isStarred && (
+                        <Ionicons name="star" size={18} color="#F59E0B" />
+                      )}
+                    </View>
                     <View className="flex-row items-center mt-1">
                       <View className="bg-neutral-100 rounded-full px-2 py-1 mr-2">
                         <Text className="text-xs font-medium text-neutral-600">
@@ -172,9 +242,27 @@ export default function InventoryScreen({ navigation }: any) {
                     </View>
                   </View>
 
+                  {/* Star Button */}
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      toggleStarred(item.id);
+                    }}
+                    className="w-10 h-10 items-center justify-center"
+                  >
+                    <Ionicons
+                      name={item.isStarred ? "star" : "star-outline"}
+                      size={24}
+                      color="#F59E0B"
+                    />
+                  </Pressable>
+
                   {/* Delete Button */}
                   <Pressable
-                    onPress={() => deleteItem(item.id)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      deleteItem(item.id);
+                    }}
                     className="w-10 h-10 items-center justify-center"
                   >
                     <Ionicons name="trash-outline" size={20} color="#EF4444" />

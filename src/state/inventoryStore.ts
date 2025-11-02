@@ -12,6 +12,8 @@ interface InventoryState {
   clearAll: () => void;
   getItemByBarcode: (barcode: string) => InventoryItem | undefined;
   getLowStockItems: () => InventoryItem[];
+  toggleStarred: (id: string) => void;
+  getStarredLowStockItems: () => InventoryItem[];
 }
 
 export const useInventoryStore = create<InventoryState>()(
@@ -67,6 +69,25 @@ export const useInventoryStore = create<InventoryState>()(
         return get().items.filter(
           (item) =>
             item.lowStockThreshold && item.quantity <= item.lowStockThreshold
+        );
+      },
+
+      toggleStarred: (id) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id
+              ? { ...item, isStarred: !item.isStarred, updatedAt: Date.now() }
+              : item
+          ),
+        }));
+      },
+
+      getStarredLowStockItems: () => {
+        return get().items.filter(
+          (item) =>
+            item.isStarred &&
+            item.lowStockThreshold &&
+            item.quantity <= item.lowStockThreshold
         );
       },
     }),

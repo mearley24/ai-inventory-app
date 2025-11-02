@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration
@@ -22,8 +22,8 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-// Initialize Auth (persistence is handled automatically by Firebase)
-const auth = getAuth(app);
+// Initialize Auth - Firebase will automatically handle persistence in React Native
+const auth: Auth = getAuth(app);
 
 // Initialize Firestore
 const firestore = getFirestore(app);

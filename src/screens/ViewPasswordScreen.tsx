@@ -142,7 +142,7 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
     }
 
     // Share with permission level
-    sharePassword(password.id, [emailLower]);
+    sharePassword(password.id, [emailLower], sharePermission);
 
     // Store permission in sharedPermissions (would need to update store function)
     // For now, we'll just show success

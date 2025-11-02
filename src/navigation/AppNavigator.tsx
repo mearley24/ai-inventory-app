@@ -19,6 +19,7 @@ import RecategorizeScreen from "../screens/RecategorizeScreen";
 import DToolsImportScreen from "../screens/DToolsImportScreen";
 import AddPasswordScreen from "../screens/AddPasswordScreen";
 import ViewPasswordScreen from "../screens/ViewPasswordScreen";
+import BulkSharePasswordsScreen from "../screens/BulkSharePasswordsScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import { useAuthStore } from "../state/authStore";
@@ -191,6 +192,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ViewPassword"
             component={ViewPasswordScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="BulkSharePasswords"
+            component={BulkSharePasswordsScreen}
             options={{ presentation: "modal" }}
           />
         </>

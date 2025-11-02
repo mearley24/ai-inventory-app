@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PasswordEntry, PasswordCategory } from "../types/password";
+import { PasswordEntry, PasswordCategory, PasswordPermission } from "../types/password";
 import { encryptPassword, decryptPassword } from "../utils/encryption";
 
 interface PasswordVaultState {
@@ -16,12 +16,13 @@ interface PasswordVaultState {
   updatePassword: (id: string, updates: Partial<Omit<PasswordEntry, "id" | "encryptedPassword">> & { plainPassword?: string }) => Promise<void>;
   deletePassword: (id: string) => void;
   getPassword: (id: string) => Promise<string | null>;
-  sharePassword: (id: string, userIds: string[]) => void;
+  sharePassword: (id: string, userIds: string[], permission?: PasswordPermission) => void;
+  shareMultiplePasswords: (passwordIds: string[], userId: string, permission: PasswordPermission) => void;
   lockVault: () => void;
   unlockVault: () => void;
   getPasswordsByCategory: (category: PasswordCategory) => PasswordEntry[];
   searchPasswords: (query: string) => PasswordEntry[];
-  logAccess: (passwordId: string, action: "viewed" | "copied") => void;
+  logAccess: (passwordId: string, action: "viewed" | "copied" | "autofilled") => void;
 }
 
 export const usePasswordVaultStore = create<PasswordVaultState>()(
@@ -87,13 +88,35 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
         }
       },
 
-      sharePassword: (id, userIds) => {
+      sharePassword: (id, userIds, permission = "use") => {
         set((state) => ({
           passwords: state.passwords.map((pwd) =>
             pwd.id === id
               ? {
                   ...pwd,
                   sharedWith: [...new Set([...pwd.sharedWith, ...userIds])],
+                  sharedPermissions: {
+                    ...pwd.sharedPermissions,
+                    ...userIds.reduce((acc, userId) => ({ ...acc, [userId]: permission }), {}),
+                  },
+                  updatedAt: Date.now(),
+                }
+              : pwd
+          ),
+        }));
+      },
+
+      shareMultiplePasswords: (passwordIds, userId, permission) => {
+        set((state) => ({
+          passwords: state.passwords.map((pwd) =>
+            passwordIds.includes(pwd.id)
+              ? {
+                  ...pwd,
+                  sharedWith: [...new Set([...pwd.sharedWith, userId])],
+                  sharedPermissions: {
+                    ...pwd.sharedPermissions,
+                    [userId]: permission,
+                  },
                   updatedAt: Date.now(),
                 }
               : pwd

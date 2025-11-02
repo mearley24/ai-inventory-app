@@ -93,19 +93,34 @@ export default function PasswordVaultScreen({ navigation }: any) {
             <View className="flex-1">
               <Text className="text-3xl font-bold text-neutral-900">Password Vault</Text>
             </View>
-            <Pressable
-              onPress={() => navigation.navigate("AddPassword")}
-              className="bg-indigo-600 rounded-full w-10 h-10 items-center justify-center"
-              style={{
-                shadowColor: "#4F46E5",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.3,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <Ionicons name="add" size={24} color="white" />
-            </Pressable>
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={() => navigation.navigate("BulkSharePasswords")}
+                className="bg-emerald-600 rounded-full w-10 h-10 items-center justify-center"
+                style={{
+                  shadowColor: "#10B981",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <Ionicons name="share-social" size={20} color="white" />
+              </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate("AddPassword")}
+                className="bg-indigo-600 rounded-full w-10 h-10 items-center justify-center"
+                style={{
+                  shadowColor: "#4F46E5",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <Ionicons name="add" size={24} color="white" />
+              </Pressable>
+            </View>
           </View>
           <Text className="text-base text-neutral-500">
             {filteredPasswords.length} secure {filteredPasswords.length === 1 ? "password" : "passwords"}

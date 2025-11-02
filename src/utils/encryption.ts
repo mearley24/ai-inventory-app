@@ -14,8 +14,8 @@ export const encryptPassword = async (password: string): Promise<string> => {
       Crypto.CryptoDigestAlgorithm.SHA256,
       combined
     );
-    // Store the password with a simple XOR-like encoding
-    const encoded = Buffer.from(password).toString("base64");
+    // Store the password with base64 encoding (React Native compatible)
+    const encoded = btoa(password);
     return `${hash.substring(0, 16)}:${encoded}`;
   } catch (error) {
     console.error("Encryption error:", error);
@@ -28,7 +28,7 @@ export const decryptPassword = async (encryptedPassword: string): Promise<string
     const [, encoded] = encryptedPassword.split(":");
     if (!encoded) throw new Error("Invalid encrypted format");
 
-    const decoded = Buffer.from(encoded, "base64").toString("utf-8");
+    const decoded = atob(encoded);
     return decoded;
   } catch (error) {
     console.error("Decryption error:", error);

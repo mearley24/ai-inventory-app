@@ -27,77 +27,98 @@ export default function ScannerScreen({ navigation }: any) {
     setScannedData(data);
     setIsProcessing(true);
 
-    // Check if item already exists with this barcode
-    const existingItem = getItemByBarcode(data);
+    try {
+      // Check if item already exists with this exact barcode
+      const existingItem = getItemByBarcode(data);
 
-    if (existingItem) {
-      // Item exists with this barcode, show it
-      setIsProcessing(false);
-      setTimeout(() => {
-        navigation.navigate("EditItem", { item: existingItem });
-        setScanned(false);
-        setScannedData("");
-      }, 500);
-    } else {
-      // Check if scanned barcode matches any SKU/model numbers in existing items
-      // This handles cases where items were imported with model numbers but no barcode set yet
-      const scannedLower = data.toLowerCase().trim();
+      if (existingItem) {
+        // Item exists with this barcode, show it
+        setIsProcessing(false);
+        setTimeout(() => {
+          navigation.navigate("EditItem", { item: existingItem });
+          setScanned(false);
+          setScannedData("");
+        }, 500);
+        return;
+      }
+
+      // Search for items where the barcode matches their SKU/model number
+      // The barcode itself IS the SKU we're looking for
+      const barcodeLower = data.toLowerCase().trim();
       const matchingItems = items.filter((item) => {
-        // Check if the scanned barcode appears in the item's existing barcode field (partial match)
-        if (item.barcode?.toLowerCase().includes(scannedLower)) {
-          return true;
-        }
-
-        // Check if the scanned barcode appears in the item's name (could be model number)
-        if (item.name.toLowerCase().includes(scannedLower)) {
-          return true;
-        }
-
-        // Check if the scanned barcode appears in the description (could be SKU/part number)
-        if (item.description?.toLowerCase().includes(scannedLower)) {
-          return true;
-        }
-
-        // Also check reverse: if item's barcode (which might be a model number from D-Tools)
-        // partially matches the scanned barcode
-        if (item.barcode && scannedLower.includes(item.barcode.toLowerCase())) {
-          return true;
-        }
-
+        // Check if item's stored barcode/model (from D-Tools) matches scanned barcode
+        if (item.barcode?.toLowerCase() === barcodeLower) return true;
+        // Check if item's stored barcode contains the scanned barcode
+        if (item.barcode?.toLowerCase().includes(barcodeLower)) return true;
+        // Check reverse: scanned barcode contains item's barcode
+        if (item.barcode && barcodeLower.includes(item.barcode.toLowerCase())) return true;
+        // Check if item name contains the barcode (model number in name)
+        if (item.name.toLowerCase().includes(barcodeLower)) return true;
+        // Check if description contains the barcode
+        if (item.description?.toLowerCase().includes(barcodeLower)) return true;
         return false;
       });
 
-      if (matchingItems.length > 0) {
-        // Found potential matches - let user choose
+      if (matchingItems.length === 1) {
+        // Perfect match! Auto-link the barcode to this item
+        const matchedItem = matchingItems[0];
+        updateItem(matchedItem.id, { barcode: data });
+        setIsProcessing(false);
+
+        Alert.alert(
+          "Barcode Linked!",
+          `Successfully linked barcode to:\n${matchedItem.name}${matchedItem.barcode ? `\nModel/SKU: ${matchedItem.barcode}` : ""}`,
+          [
+            {
+              text: "View Item",
+              onPress: () => {
+                navigation.navigate("EditItem", { item: { ...matchedItem, barcode: data } });
+                setScanned(false);
+                setScannedData("");
+              },
+            },
+            {
+              text: "Scan Another",
+              onPress: () => {
+                setScanned(false);
+                setScannedData("");
+              },
+            },
+          ]
+        );
+        return;
+      } else if (matchingItems.length > 1) {
+        // Multiple matches - let user choose
         setSearchResults(matchingItems);
         setShowItemPicker(true);
         setIsProcessing(false);
-      } else {
-        // No matches, use AI to identify new product
-        try {
-          const productInfo = await identifyProduct(data);
-          setIsProcessing(false);
-
-          // Navigate to add item with pre-filled data
-          setTimeout(() => {
-            navigation.navigate("AddItem", {
-              barcode: data,
-              suggestedName: productInfo.name,
-              suggestedCategory: productInfo.category,
-            });
-            setScanned(false);
-            setScannedData("");
-          }, 500);
-        } catch (error) {
-          setIsProcessing(false);
-          // Navigate to add item with just barcode
-          setTimeout(() => {
-            navigation.navigate("AddItem", { barcode: data });
-            setScanned(false);
-            setScannedData("");
-          }, 500);
-        }
+        return;
       }
+
+      // No match found, use AI to identify new product
+      const productInfo = await identifyProduct(data);
+      setIsProcessing(false);
+
+      // Navigate to add item with pre-filled data
+      setTimeout(() => {
+        navigation.navigate("AddItem", {
+          barcode: data,
+          suggestedName: productInfo.name,
+          suggestedCategory: productInfo.category,
+        });
+        setScanned(false);
+        setScannedData("");
+      }, 500);
+    } catch (error) {
+      console.error("Barcode scan error:", error);
+      setIsProcessing(false);
+
+      // Fallback: navigate to add item with just barcode
+      setTimeout(() => {
+        navigation.navigate("AddItem", { barcode: data });
+        setScanned(false);
+        setScannedData("");
+      }, 500);
     }
   };
 

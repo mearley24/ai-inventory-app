@@ -18,6 +18,9 @@ interface InventoryState {
   mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => void;
   autoMergeAllDuplicates: () => { merged: number; removed: number };
   bulkUpdateCategories: (updates: { id: string; category: string; subcategory?: string }[]) => void;
+  assignToProject: (itemId: string, projectId: string | undefined) => void;
+  getItemsByProject: (projectId: string) => InventoryItem[];
+  unassignFromProject: (itemId: string) => void;
 }
 
 export const useInventoryStore = create<InventoryState>()(
@@ -185,6 +188,30 @@ export const useInventoryStore = create<InventoryState>()(
             }
             return item;
           }),
+        }));
+      },
+
+      assignToProject: (itemId, projectId) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === itemId
+              ? { ...item, assignedProjectId: projectId, updatedAt: Date.now() }
+              : item
+          ),
+        }));
+      },
+
+      getItemsByProject: (projectId) => {
+        return get().items.filter((item) => item.assignedProjectId === projectId);
+      },
+
+      unassignFromProject: (itemId) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === itemId
+              ? { ...item, assignedProjectId: undefined, updatedAt: Date.now() }
+              : item
+          ),
         }));
       },
     }),

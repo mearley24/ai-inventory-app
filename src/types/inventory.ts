@@ -10,6 +10,7 @@ export interface InventoryItem {
   imageUrl?: string;
   lowStockThreshold?: number;
   isStarred?: boolean; // Favorite/everyday items
+  assignedProjectId?: string; // Project assignment
   createdAt: number;
   updatedAt: number;
 }

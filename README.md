@@ -57,6 +57,8 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - Color-coded projects for easy identification
 - Total time tracking across all sessions
 - Clean, minimalist interface with large, readable time displays
+- **🔗 Assign inventory items to projects** - Track which products are used for each job
+- View assigned item counts on each project card
 
 ### 🤖 AI Features
 - Smart product identification from barcodes
@@ -165,6 +167,7 @@ Each inventory item includes:
 - Description (optional)
 - Low stock threshold (optional)
 - **Starred/Favorite flag** (for everyday items)
+- **Assigned Project** (optional, links item to a specific project/job)
 - Creation and update timestamps
 
 ## AI-Powered Invoice Upload & Folder System ⭐ NEW!
@@ -310,6 +313,35 @@ This feature is essential for field techs who need to maintain stock of common i
 - Mounting hardware
 - Common cables
 - Frequently replaced components
+
+## Project-Based Inventory Tracking ⭐ NEW!
+
+Assign inventory items to specific projects to track which products are allocated for each job.
+
+**How it Works:**
+1. Edit any inventory item
+2. Scroll to "Assign to Project" section
+3. Select a project from your Time Tracker projects
+4. Save the item
+
+**Benefits:**
+- **Job Costing** - Know exactly which items were used for each project
+- **Inventory Allocation** - See which items are assigned vs available
+- **Project Overview** - View item count directly on project cards in Time Tracker
+- **Visual Indicators** - Assigned items show a colored project badge in inventory list
+- **Easy Management** - Reassign or unassign items anytime
+
+**Visual Features:**
+- Project badges appear on inventory item cards with project color and name
+- Time Tracker shows "X items assigned" under each project
+- Items can only be assigned to one project at a time
+- Deleting a project automatically unassigns all its items
+
+**Perfect for:**
+- Tracking materials allocated for specific installations
+- Keeping client-specific inventory separate
+- Estimating job costs based on used inventory
+- Organizing multi-project workflows
 
 ### Projects & Time Tracking
 Each project tracks:

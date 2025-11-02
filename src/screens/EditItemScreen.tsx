@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Pla
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
+import { useTimeTrackerStore } from "../state/timeTrackerStore";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 const CATEGORIES = [
@@ -30,6 +31,7 @@ const CATEGORIES = [
 export default function EditItemScreen({ navigation, route }: any) {
   const { item } = route.params || {};
   const updateItem = useInventoryStore((s) => s.updateItem);
+  const projects = useTimeTrackerStore((s) => s.projects);
 
   // If no item provided, go back immediately
   React.useEffect(() => {
@@ -47,6 +49,9 @@ export default function EditItemScreen({ navigation, route }: any) {
     item?.lowStockThreshold?.toString() || ""
   );
   const [isStarred, setIsStarred] = React.useState(item?.isStarred || false);
+  const [assignedProjectId, setAssignedProjectId] = React.useState<string | undefined>(
+    item?.assignedProjectId
+  );
 
   // Safety check
   if (!item) {
@@ -66,6 +71,7 @@ export default function EditItemScreen({ navigation, route }: any) {
       description: description.trim() || undefined,
       lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold) : undefined,
       isStarred,
+      assignedProjectId,
     });
 
     // Force navigation back
@@ -340,6 +346,107 @@ export default function EditItemScreen({ navigation, route }: any) {
                   />
                 </View>
               </Pressable>
+            </View>
+
+            {/* Project Assignment */}
+            <View className="mb-6">
+              <Text className="text-sm font-semibold text-neutral-700 mb-2">
+                Assign to Project
+              </Text>
+              <Text className="text-xs text-neutral-500 mb-3">
+                Track which project this item is being used for
+              </Text>
+              <View className="space-y-2">
+                {/* None Option */}
+                <Pressable
+                  onPress={() => setAssignedProjectId(undefined)}
+                  className={`flex-row items-center justify-between px-4 py-3 rounded-xl ${
+                    !assignedProjectId ? "bg-indigo-50 border-2 border-indigo-600" : "bg-white"
+                  }`}
+                  style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}
+                >
+                  <View className="flex-row items-center">
+                    <Ionicons
+                      name="close-circle"
+                      size={20}
+                      color={!assignedProjectId ? "#4F46E5" : "#9CA3AF"}
+                    />
+                    <Text
+                      className={`ml-3 text-base font-medium ${
+                        !assignedProjectId ? "text-indigo-700" : "text-neutral-700"
+                      }`}
+                    >
+                      No Project
+                    </Text>
+                  </View>
+                  {!assignedProjectId && (
+                    <Ionicons name="checkmark-circle" size={24} color="#4F46E5" />
+                  )}
+                </Pressable>
+
+                {/* Project Options */}
+                {projects.map((project) => (
+                  <Pressable
+                    key={project.id}
+                    onPress={() => setAssignedProjectId(project.id)}
+                    className={`flex-row items-center justify-between px-4 py-3 rounded-xl mt-2 ${
+                      assignedProjectId === project.id ? "bg-indigo-50 border-2 border-indigo-600" : "bg-white"
+                    }`}
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }}
+                  >
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        className="w-10 h-10 rounded-full items-center justify-center"
+                        style={{ backgroundColor: project.color }}
+                      >
+                        <Ionicons name="briefcase" size={20} color="white" />
+                      </View>
+                      <View className="ml-3 flex-1">
+                        <Text
+                          className={`text-base font-medium ${
+                            assignedProjectId === project.id ? "text-indigo-700" : "text-neutral-900"
+                          }`}
+                          numberOfLines={1}
+                        >
+                          {project.name}
+                        </Text>
+                        {project.description && (
+                          <Text className="text-xs text-neutral-500" numberOfLines={1}>
+                            {project.description}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    {assignedProjectId === project.id && (
+                      <Ionicons name="checkmark-circle" size={24} color="#4F46E5" />
+                    )}
+                  </Pressable>
+                ))}
+
+                {projects.length === 0 && (
+                  <View className="bg-neutral-100 rounded-xl px-4 py-6 items-center">
+                    <Ionicons name="briefcase-outline" size={32} color="#9CA3AF" />
+                    <Text className="text-neutral-500 text-sm mt-2 text-center">
+                      No projects available
+                    </Text>
+                    <Text className="text-neutral-400 text-xs mt-1 text-center">
+                      Create projects in the Time Tracker tab
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </Animated.View>
         </ScrollView>

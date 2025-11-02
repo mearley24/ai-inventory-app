@@ -3,6 +3,7 @@ import { View, Text, FlatList, ScrollView, Pressable, TextInput, Alert } from "r
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
+import { useTimeTrackerStore } from "../state/timeTrackerStore";
 import { InventoryItem } from "../types/inventory";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -16,6 +17,7 @@ export default function InventoryScreen({ navigation }: any) {
   const toggleStarred = useInventoryStore((s) => s.toggleStarred);
   const getLowStockItems = useInventoryStore((s) => s.getLowStockItems);
   const getStarredLowStockItems = useInventoryStore((s) => s.getStarredLowStockItems);
+  const projects = useTimeTrackerStore((s) => s.projects);
 
   // Memoize expensive computations
   const categories = React.useMemo(() =>
@@ -70,7 +72,10 @@ export default function InventoryScreen({ navigation }: any) {
   }, []);
 
   // Render item for FlatList - memoized for performance
-  const renderItem = React.useCallback(({ item, index }: { item: InventoryItem; index: number }) => (
+  const renderItem = React.useCallback(({ item, index }: { item: InventoryItem; index: number }) => {
+    const assignedProject = projects.find(p => p.id === item.assignedProjectId);
+
+    return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index * 50, 500)).springify()}
     >
@@ -108,12 +113,23 @@ export default function InventoryScreen({ navigation }: any) {
               <Ionicons name="star" size={18} color="#F59E0B" />
             )}
           </View>
-          <View className="flex-row items-center mt-1">
+          <View className="flex-row items-center mt-1 flex-wrap">
             <View className="bg-neutral-100 rounded-full px-2 py-1 mr-2">
               <Text className="text-xs font-medium text-neutral-600">
                 {item.category}
               </Text>
             </View>
+            {assignedProject && (
+              <View
+                className="rounded-full px-2 py-1 mr-2 flex-row items-center"
+                style={{ backgroundColor: assignedProject.color + "20" }}
+              >
+                <Ionicons name="briefcase" size={10} color={assignedProject.color} />
+                <Text className="text-xs font-medium ml-1" style={{ color: assignedProject.color }}>
+                  {assignedProject.name}
+                </Text>
+              </View>
+            )}
             <Text className="text-sm text-neutral-500">
               Qty: {item.quantity}
             </Text>
@@ -155,7 +171,8 @@ export default function InventoryScreen({ navigation }: any) {
         </Pressable>
       </Pressable>
     </Animated.View>
-  ), [navigation, isLowStock, toggleStarred, deleteItem]);
+    );
+  }, [navigation, isLowStock, toggleStarred, deleteItem, projects]);
 
   const ListEmptyComponent = React.useCallback(() => (
     <View className="items-center justify-center py-20 px-6">

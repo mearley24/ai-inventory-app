@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTimeTrackerStore } from "../state/timeTrackerStore";
+import { useInventoryStore } from "../state/inventoryStore";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -21,6 +22,7 @@ export default function TimeTrackerScreen({ navigation }: any) {
   const stopTimer = useTimeTrackerStore((s) => s.stopTimer);
   const addProject = useTimeTrackerStore((s) => s.addProject);
   const deleteProject = useTimeTrackerStore((s) => s.deleteProject);
+  const getItemsByProject = useInventoryStore((s) => s.getItemsByProject);
 
   // Update elapsed time for active timer
   React.useEffect(() => {
@@ -176,6 +178,7 @@ export default function TimeTrackerScreen({ navigation }: any) {
             ) : (
               projects.map((project, index) => {
                 const isActive = activeTimer?.projectId === project.id;
+                const assignedItems = getItemsByProject(project.id);
                 return (
                   <Animated.View
                     key={project.id}
@@ -221,6 +224,14 @@ export default function TimeTrackerScreen({ navigation }: any) {
                           <Text className="text-base text-neutral-500" style={{ fontVariant: ["tabular-nums"] }}>
                             {formatTime(project.totalTime + (isActive ? elapsedTime : 0))}
                           </Text>
+                          {assignedItems.length > 0 && (
+                            <View className="flex-row items-center mt-2">
+                              <Ionicons name="cube" size={14} color="#9CA3AF" />
+                              <Text className="text-xs text-neutral-500 ml-1">
+                                {assignedItems.length} {assignedItems.length === 1 ? "item" : "items"} assigned
+                              </Text>
+                            </View>
+                          )}
                         </View>
 
                         {/* Delete Button */}

@@ -33,7 +33,9 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - **Special alerts for starred items** - get notified when everyday items run low
 - **SnapAV/Snap One category system** (Control4, Audio, Cables, Networking, Surveillance, etc.)
 - **Bulk CSV/Excel import** for loading large price lists
-- **📄 AI-Powered Invoice Upload** ⭐ NEW! - Scan/upload invoices to auto-populate inventory
+- **📄 AI-Powered Invoice Upload** - Scan/upload invoices (images & PDFs) to auto-populate inventory
+- **📁 Invoice Folder System** ⭐ NEW! - Drop invoices in a folder for automatic batch processing
+- **🔄 Duplicate Finder** - Automatically merge duplicate items and reset quantities
 - Smart category matching during import
 
 ### 📷 Barcode Scanner
@@ -112,6 +114,8 @@ src/
 │   ├── EditItemScreen.tsx       # Edit existing items
 │   ├── ImportScreen.tsx         # CSV/Excel import
 │   ├── InvoiceUploadScreen.tsx  # AI invoice parsing
+│   ├── InvoiceFolderScreen.tsx  # Invoice folder management
+│   ├── DuplicateFinderScreen.tsx # Duplicate item finder
 │   └── AddPasswordScreen.tsx    # Add new passwords
 ├── navigation/        # Navigation configuration
 │   └── AppNavigator.tsx         # Tab, stack, and auth navigators
@@ -125,15 +129,19 @@ src/
 │   ├── inventory.ts             # Inventory & invoice data models
 │   └── password.ts              # Password vault types
 ├── api/              # API integrations
-│   ├── invoice-parser.ts        # GPT-4o Vision invoice parsing
+│   ├── invoice-parser.ts        # GPT-4o Vision + Claude PDF parsing
 │   ├── openai.ts                # OpenAI client
 │   ├── anthropic.ts             # Anthropic client
 │   └── chat-service.ts          # LLM text generation
+├── services/         # Background services
+│   ├── invoiceScanner.ts        # Invoice folder scanning logic
+│   └── invoiceScannerTask.ts    # Background task for hourly scans
 ├── config/           # Configuration
 │   └── firebase.ts              # Firebase initialization
 └── utils/            # Utility functions
     ├── categories.ts            # SnapAV category matching
-    └── encryption.ts            # Password encryption/decryption
+    ├── encryption.ts            # Password encryption/decryption
+    └── navigation.ts            # Safe navigation helpers
 ```
 
 ## Key Features Explained
@@ -151,13 +159,18 @@ Each inventory item includes:
 - **Starred/Favorite flag** (for everyday items)
 - Creation and update timestamps
 
-## AI-Powered Invoice Upload ⭐ NEW!
+## AI-Powered Invoice Upload & Folder System ⭐ NEW!
 
-Automatically populate inventory from invoice photos using GPT-4o Vision:
+Automatically populate inventory from invoice photos and PDFs with two convenient methods:
+
+### Method 1: Individual Invoice Upload
 
 **How it Works:**
 1. Tap the "Invoice" button in the Inventory screen
-2. Take a photo of an invoice or select from your library
+2. Choose:
+   - Take a photo with camera
+   - Select from photo library
+   - Upload a PDF or image file
 3. AI parses the invoice and extracts all line items with:
    - Product descriptions
    - Quantities
@@ -168,19 +181,41 @@ Automatically populate inventory from invoice photos using GPT-4o Vision:
 5. Tap items to deselect any you don't want to import
 6. Tap "Add to Inventory" to import selected items
 
+**Supported Formats:**
+- Images: PNG, JPEG, GIF, WEBP (via OpenAI GPT-4o Vision)
+- PDFs: Native support (via Claude Sonnet 4 API)
+
+### Method 2: Invoice Folder System (Batch Processing) ⭐ NEW!
+
+**Automatic Scanning:**
+- Drop invoices into a dedicated folder
+- System automatically scans every hour
+- All new invoices are parsed and added to inventory
+- No manual intervention required
+
+**Manual Scanning:**
+1. Tap the "Folder" button in the Inventory screen
+2. View all invoices in the folder
+3. Tap "Scan Now" to immediately process all new invoices
+4. See real-time progress and results
+
 **Features:**
-- Works with photos or screenshots of invoices
-- Extracts vendor name, invoice number, date, and totals
-- Handles complex invoice layouts with multiple line items
-- Smart category matching to SnapAV categories
-- Select/deselect items before importing
-- Preserves pricing and quantity information
+- **Auto-Scan Toggle** - Enable/disable hourly background scanning
+- **Processing History** - Tracks which files have been processed
+- **Batch Processing** - Handles multiple invoices at once
+- **File Management** - View, delete, and manage invoice files
+- **Statistics** - Track total files, processed count, and pending items
+- **Clear History** - Reset processing to re-scan files if needed
+
+**Folder Location:**
+The invoice folder is created automatically at app startup. Access it via the folder icon in the Invoice Folder screen to see the exact path.
 
 **Best Practices:**
 - Take clear, well-lit photos of invoices
 - Ensure all text is readable
 - Works best with standard invoice formats
 - Supports SnapAV and major distributor invoices
+- PDF support for digital invoices
 
 ## CSV/Excel Import
 

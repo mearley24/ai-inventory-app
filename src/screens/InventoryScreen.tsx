@@ -177,6 +177,13 @@ export default function InventoryScreen({ navigation }: any) {
                 <Ionicons name="receipt" size={16} color="#7C3AED" />
                 <Text className="text-purple-600 font-semibold ml-2">Invoice</Text>
               </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate("InvoiceFolder")}
+                className="bg-pink-100 rounded-full px-4 py-2 flex-row items-center"
+              >
+                <Ionicons name="folder" size={16} color="#DB2777" />
+                <Text className="text-pink-600 font-semibold ml-2">Folder</Text>
+              </Pressable>
             </View>
           </View>
           <View className="flex-row items-center justify-between">

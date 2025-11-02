@@ -14,14 +14,47 @@ export default function ScannerScreen({ navigation }: any) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [showItemPicker, setShowItemPicker] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState<InventoryItem[]>([]);
+  const lastScannedRef = React.useRef<string>("");
+  const lastScanTimeRef = React.useRef<number>(0);
 
   const getItemByBarcode = useInventoryStore((s) => s.getItemByBarcode);
   const items = useInventoryStore((s) => s.items);
   const addItem = useInventoryStore((s) => s.addItem);
   const updateItem = useInventoryStore((s) => s.updateItem);
 
+  // Reset scanner when screen comes into focus
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      setScanned(false);
+      setScannedData("");
+      setIsProcessing(false);
+      setShowItemPicker(false);
+      setSearchResults([]);
+      lastScannedRef.current = "";
+      lastScanTimeRef.current = 0;
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const resetScanner = () => {
+    setScanned(false);
+    setScannedData("");
+    setIsProcessing(false);
+    lastScannedRef.current = "";
+  };
+
   const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
     if (scanned || isProcessing) return;
+
+    // Prevent scanning the same barcode within 3 seconds
+    const now = Date.now();
+    if (lastScannedRef.current === data && now - lastScanTimeRef.current < 3000) {
+      return;
+    }
+
+    lastScannedRef.current = data;
+    lastScanTimeRef.current = now;
 
     setScanned(true);
     setScannedData(data);
@@ -80,8 +113,7 @@ export default function ScannerScreen({ navigation }: any) {
             {
               text: "Scan Another",
               onPress: () => {
-                setScanned(false);
-                setScannedData("");
+                resetScanner();
               },
             },
           ]
@@ -134,8 +166,7 @@ export default function ScannerScreen({ navigation }: any) {
           onPress: () => {
             setShowItemPicker(false);
             setSearchResults([]);
-            setScanned(false);
-            setScannedData("");
+            resetScanner();
           },
         },
         {
@@ -322,8 +353,7 @@ export default function ScannerScreen({ navigation }: any) {
         onRequestClose={() => {
           setShowItemPicker(false);
           setSearchResults([]);
-          setScanned(false);
-          setScannedData("");
+          resetScanner();
         }}
       >
         <View className="flex-1 bg-black/50">
@@ -401,8 +431,7 @@ export default function ScannerScreen({ navigation }: any) {
                   onPress={() => {
                     setShowItemPicker(false);
                     setSearchResults([]);
-                    setScanned(false);
-                    setScannedData("");
+                    resetScanner();
                   }}
                   className="bg-neutral-200 rounded-xl py-4 items-center"
                 >

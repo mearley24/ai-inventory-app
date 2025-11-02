@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, Pressable, Platform, Alert, FlatList, Modal } from "react-native";
 import { CameraView, useCameraPermissions, CameraType } from "expo-camera";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,13 +11,18 @@ import { InventoryItem } from "../types/inventory";
 
 export default function ScannerScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
   const [scanned, setScanned] = React.useState(false);
   const [scannedData, setScannedData] = React.useState("");
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [showItemPicker, setShowItemPicker] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState<InventoryItem[]>([]);
+  const [extractedSKU, setExtractedSKU] = React.useState<string>("");
+  const [matchedItem, setMatchedItem] = React.useState<InventoryItem | null>(null);
+  const [mode, setMode] = React.useState<"capture" | "scan">("capture"); // capture SKU first, then scan barcode
   const lastScannedRef = React.useRef<string>("");
   const lastScanTimeRef = React.useRef<number>(0);
+  const cameraRef = React.useRef<CameraView>(null);
 
   const getItemByBarcode = useInventoryStore((s) => s.getItemByBarcode);
   const items = useInventoryStore((s) => s.items);
@@ -30,6 +37,9 @@ export default function ScannerScreen({ navigation }: any) {
       setIsProcessing(false);
       setShowItemPicker(false);
       setSearchResults([]);
+      setExtractedSKU("");
+      setMatchedItem(null);
+      setMode("capture");
       lastScannedRef.current = "";
       lastScanTimeRef.current = 0;
     });
@@ -41,10 +51,149 @@ export default function ScannerScreen({ navigation }: any) {
     setScanned(false);
     setScannedData("");
     setIsProcessing(false);
+    setExtractedSKU("");
+    setMatchedItem(null);
+    setMode("capture");
     lastScannedRef.current = "";
   };
 
+  const extractSKUFromImage = async (imageUri: string): Promise<string | null> => {
+    try {
+      // Read image as base64
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const OpenAI = (await import("openai")).default;
+      const apiKey = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
+
+      if (!apiKey) {
+        throw new Error("OpenAI API key not found");
+      }
+
+      const openai = new OpenAI({ apiKey });
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an OCR assistant. Extract the SKU, model number, or part number from product labels. Look for alphanumeric codes that appear to be product identifiers. Return ONLY the SKU/model number text, nothing else. If multiple numbers are visible, return the one that looks like a product model or SKU (not serial numbers, barcodes, or dates).",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Extract the SKU or model number from this product label:",
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 100,
+      });
+
+      const extractedText = response.choices[0].message.content?.trim();
+      return extractedText || null;
+    } catch (error) {
+      console.error("SKU extraction error:", error);
+      return null;
+    }
+  };
+
+  const handleCaptureSKU = async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+
+    try {
+      // Take a picture to extract SKU
+      const photo = await cameraRef.current?.takePictureAsync({
+        quality: 0.8,
+      });
+
+      if (!photo) {
+        throw new Error("Failed to capture image");
+      }
+
+      // Extract SKU from the image
+      const sku = await extractSKUFromImage(photo.uri);
+
+      if (!sku) {
+        setIsProcessing(false);
+        Alert.alert("No SKU Found", "Could not detect a SKU or model number in the image. Try again or skip to scan barcode.", [
+          { text: "Retry", onPress: () => resetScanner() },
+          {
+            text: "Skip to Barcode",
+            onPress: () => {
+              setMode("scan");
+              setIsProcessing(false);
+            }
+          },
+        ]);
+        return;
+      }
+
+      setExtractedSKU(sku);
+
+      // Search for items matching the SKU
+      const skuLower = sku.toLowerCase().trim();
+      const matchingItems = items.filter((item) => {
+        // Check if item's stored barcode/model (from D-Tools) matches SKU
+        if (item.barcode?.toLowerCase() === skuLower) return true;
+        if (item.barcode?.toLowerCase().includes(skuLower)) return true;
+        if (skuLower.includes(item.barcode?.toLowerCase() || "")) return true;
+        // Check if item name contains the SKU
+        if (item.name.toLowerCase().includes(skuLower)) return true;
+        // Check if description contains the SKU
+        if (item.description?.toLowerCase().includes(skuLower)) return true;
+        return false;
+      });
+
+      if (matchingItems.length === 1) {
+        // Perfect match! Store it and switch to scan mode
+        setMatchedItem(matchingItems[0]);
+        setMode("scan");
+        setIsProcessing(false);
+        Alert.alert(
+          "Item Found!",
+          `Found: ${matchingItems[0].name}\nSKU: ${sku}\n\nNow scan the barcode to link it to this item.`,
+          [{ text: "Ready to Scan" }]
+        );
+      } else if (matchingItems.length > 1) {
+        // Multiple matches - let user choose
+        setSearchResults(matchingItems);
+        setShowItemPicker(true);
+        setIsProcessing(false);
+      } else {
+        // No match - will create new item after barcode scan
+        setIsProcessing(false);
+        Alert.alert(
+          "New Item",
+          `SKU detected: ${sku}\n\nThis item is not in inventory yet. Scan the barcode to create a new item.`,
+          [{
+            text: "Ready to Scan",
+            onPress: () => setMode("scan")
+          }]
+        );
+      }
+    } catch (error) {
+      console.error("Capture SKU error:", error);
+      setIsProcessing(false);
+      Alert.alert("Error", "Failed to capture or process image. Please try again.");
+    }
+  };
+
   const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
+    // Only process barcodes when in "scan" mode
+    if (mode !== "scan") return;
     if (scanned || isProcessing) return;
 
     // Prevent scanning the same barcode within 3 seconds
@@ -69,120 +218,75 @@ export default function ScannerScreen({ navigation }: any) {
         setIsProcessing(false);
         setTimeout(() => {
           navigation.navigate("EditItem", { item: existingItem });
-          setScanned(false);
-          setScannedData("");
+          resetScanner();
         }, 500);
         return;
       }
 
-      // Search for items where the barcode matches their SKU/model number
-      // The barcode itself IS the SKU we're looking for
-      const barcodeLower = data.toLowerCase().trim();
-      const matchingItems = items.filter((item) => {
-        // Check if item's stored barcode/model (from D-Tools) matches scanned barcode
-        if (item.barcode?.toLowerCase() === barcodeLower) return true;
-        // Check if item's stored barcode contains the scanned barcode
-        if (item.barcode?.toLowerCase().includes(barcodeLower)) return true;
-        // Check reverse: scanned barcode contains item's barcode
-        if (item.barcode && barcodeLower.includes(item.barcode.toLowerCase())) return true;
-        // Check if item name contains the barcode (model number in name)
-        if (item.name.toLowerCase().includes(barcodeLower)) return true;
-        // Check if description contains the barcode
-        if (item.description?.toLowerCase().includes(barcodeLower)) return true;
-        return false;
-      });
-
-      if (matchingItems.length === 1) {
-        // Perfect match! Auto-link the barcode to this item
-        const matchedItem = matchingItems[0];
+      // If we have a matched item from SKU detection, link the barcode to it
+      if (matchedItem) {
         updateItem(matchedItem.id, { barcode: data });
         setIsProcessing(false);
 
         Alert.alert(
           "Barcode Linked!",
-          `Successfully linked barcode to:\n${matchedItem.name}${matchedItem.barcode ? `\nModel/SKU: ${matchedItem.barcode}` : ""}`,
+          `Successfully linked barcode to:\n${matchedItem.name}\nSKU: ${extractedSKU}`,
           [
             {
               text: "View Item",
               onPress: () => {
                 navigation.navigate("EditItem", { item: { ...matchedItem, barcode: data } });
-                setScanned(false);
-                setScannedData("");
+                resetScanner();
               },
             },
             {
               text: "Scan Another",
-              onPress: () => {
-                resetScanner();
-              },
+              onPress: () => resetScanner(),
             },
           ]
         );
         return;
-      } else if (matchingItems.length > 1) {
-        // Multiple matches - let user choose
-        setSearchResults(matchingItems);
-        setShowItemPicker(true);
-        setIsProcessing(false);
-        return;
       }
 
-      // No match found, use AI to identify new product
+      // No matched item - create new one
       const productInfo = await identifyProduct(data);
       setIsProcessing(false);
 
-      // Navigate to add item with pre-filled data
+      // Navigate to add item with SKU and barcode
       setTimeout(() => {
         navigation.navigate("AddItem", {
           barcode: data,
-          suggestedName: productInfo.name,
+          suggestedName: extractedSKU ? `${extractedSKU} - ${productInfo.name}` : productInfo.name,
           suggestedCategory: productInfo.category,
         });
-        setScanned(false);
-        setScannedData("");
+        resetScanner();
       }, 500);
     } catch (error) {
       console.error("Barcode scan error:", error);
       setIsProcessing(false);
 
-      // Fallback: navigate to add item with just barcode
+      // Fallback: navigate to add item with SKU info
       setTimeout(() => {
-        navigation.navigate("AddItem", { barcode: data });
-        setScanned(false);
-        setScannedData("");
+        navigation.navigate("AddItem", {
+          barcode: data,
+          suggestedName: extractedSKU || undefined,
+        });
+        resetScanner();
       }, 500);
     }
   };
 
   const handleSelectItem = (item: InventoryItem) => {
-    // Associate this barcode with the selected item
+    // User selected which item matches the SKU
+    setMatchedItem(item);
+    setShowItemPicker(false);
+    setSearchResults([]);
+    setMode("scan");
+
     Alert.alert(
-      "Link Barcode",
-      `Link barcode ${scannedData} to ${item.name}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-          onPress: () => {
-            setShowItemPicker(false);
-            setSearchResults([]);
-            resetScanner();
-          },
-        },
-        {
-          text: "Link",
-          onPress: () => {
-            updateItem(item.id, { barcode: scannedData });
-            setShowItemPicker(false);
-            setSearchResults([]);
-            setTimeout(() => {
-              navigation.navigate("EditItem", { item: { ...item, barcode: scannedData } });
-              setScanned(false);
-              setScannedData("");
-            }, 300);
-          },
-        },
-      ]
+      "Item Selected",
+      `Selected: ${item.name}\n\nNow scan the barcode to link it to this item.`,
+      [{ text: "Ready to Scan" }]
     );
   };
 
@@ -259,9 +363,10 @@ export default function ScannerScreen({ navigation }: any) {
   return (
     <View className="flex-1 bg-black">
       <CameraView
+        ref={cameraRef}
         style={{ flex: 1 }}
         facing="back"
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        onBarcodeScanned={mode === "scan" && !scanned ? handleBarCodeScanned : undefined}
         barcodeScannerSettings={{
           barcodeTypes: [
             "qr",
@@ -284,7 +389,16 @@ export default function ScannerScreen({ navigation }: any) {
           className="pt-16 pb-6 px-6"
         >
           <View className="flex-row items-center justify-between">
-            <Text className="text-2xl font-bold text-white">Scan Barcode</Text>
+            <View>
+              <Text className="text-2xl font-bold text-white">
+                {mode === "capture" ? "Capture SKU" : "Scan Barcode"}
+              </Text>
+              {mode === "scan" && matchedItem && (
+                <Text className="text-sm text-white/80 mt-1">
+                  For: {matchedItem.name}
+                </Text>
+              )}
+            </View>
             <Pressable
               onPress={() => navigation.goBack()}
               className="w-10 h-10 items-center justify-center bg-white/20 rounded-full"
@@ -308,18 +422,54 @@ export default function ScannerScreen({ navigation }: any) {
           </View>
 
           <Text className="text-white text-base mt-6 text-center">
-            Position barcode within the frame
+            {mode === "capture"
+              ? "Position the product label in the frame"
+              : "Position barcode within the frame"}
           </Text>
         </View>
 
-        {/* Bottom Instructions */}
+        {/* Bottom Instructions / Capture Button */}
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.7)"]}
           className="pb-10 pt-6 px-6"
         >
-          <Text className="text-white text-sm text-center opacity-80">
-            Supports QR codes, UPC, EAN, Code 39, Code 128, and more
-          </Text>
+          {mode === "capture" ? (
+            <Pressable
+              onPress={handleCaptureSKU}
+              disabled={isProcessing}
+              className="bg-indigo-600 rounded-full py-4 px-8 items-center"
+              style={{
+                shadowColor: "#4F46E5",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.5,
+                shadowRadius: 8,
+                elevation: 5,
+              }}
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="camera" size={24} color="white" />
+                <Text className="text-white text-lg font-bold ml-2">
+                  Capture SKU
+                </Text>
+              </View>
+            </Pressable>
+          ) : (
+            <View>
+              <Text className="text-white text-sm text-center opacity-80 mb-2">
+                {matchedItem
+                  ? `Linking to: ${matchedItem.name}`
+                  : "Scan barcode to continue"}
+              </Text>
+              <Pressable
+                onPress={resetScanner}
+                className="bg-white/20 rounded-full py-2 px-4 items-center"
+              >
+                <Text className="text-white text-sm font-semibold">
+                  Start Over
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </LinearGradient>
 
         {/* Processing Overlay */}
@@ -334,10 +484,12 @@ export default function ScannerScreen({ navigation }: any) {
                   <Ionicons name="sparkles" size={32} color="#4F46E5" />
                 </View>
                 <Text className="text-xl font-bold text-neutral-900 mb-2">
-                  AI Processing
+                  {mode === "capture" ? "Extracting SKU..." : "AI Processing"}
                 </Text>
                 <Text className="text-base text-neutral-500 text-center">
-                  Identifying product from barcode...
+                  {mode === "capture"
+                    ? "Reading product label with AI..."
+                    : "Identifying product from barcode..."}
                 </Text>
               </View>
             </Animated.View>

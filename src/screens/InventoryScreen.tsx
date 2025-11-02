@@ -173,67 +173,100 @@ export default function InventoryScreen({ navigation }: any) {
     <View className="flex-1 bg-neutral-50">
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
-        <View className="px-6 pt-4 pb-3">
-          <View className="flex-row items-center justify-between mb-1">
-            <View className="flex-1">
-              <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
-            </View>
-            <View className="flex-row gap-2">
-              <Pressable
-                onPress={() => navigation.navigate("Import")}
-                className="bg-indigo-100 rounded-full px-4 py-2 flex-row items-center"
-              >
-                <Ionicons name="cloud-upload" size={16} color="#4F46E5" />
-                <Text className="text-indigo-600 font-semibold ml-2">CSV</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => navigation.navigate("InvoiceUpload")}
-                className="bg-purple-100 rounded-full px-4 py-2 flex-row items-center"
-              >
-                <Ionicons name="receipt" size={16} color="#7C3AED" />
-                <Text className="text-purple-600 font-semibold ml-2">Invoice</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => navigation.navigate("InvoiceFolder")}
-                className="bg-pink-100 rounded-full px-4 py-2 flex-row items-center"
-              >
-                <Ionicons name="folder" size={16} color="#DB2777" />
-                <Text className="text-pink-600 font-semibold ml-2">Folder</Text>
-              </Pressable>
-            </View>
-          </View>
-          <View className="flex-row items-center justify-between">
+        <View className="px-6 pt-4 pb-2">
+          <Text className="text-3xl font-bold text-neutral-900 mb-3">Inventory</Text>
+
+          {/* Stats Row */}
+          <View className="flex-row items-center justify-between mb-3">
             <Text className="text-base text-neutral-500">
               {items.length} items • {lowStockItems.length} low stock
             </Text>
-            <View className="flex-row items-center gap-2">
-              {starredLowStockItems.length > 0 && (
-                <View className="bg-amber-100 rounded-full px-3 py-1 flex-row items-center">
-                  <Ionicons name="warning" size={14} color="#F59E0B" />
-                  <Text className="text-amber-700 font-semibold text-xs ml-1">
-                    {starredLowStockItems.length} starred low
-                  </Text>
-                </View>
-              )}
-              <Pressable
-                onPress={() => navigation.navigate("DuplicateFinder")}
-                className="bg-orange-100 rounded-full px-3 py-1 flex-row items-center"
-              >
-                <Ionicons name="copy" size={14} color="#EA580C" />
-                <Text className="text-orange-700 font-semibold text-xs ml-1">
-                  Duplicates
+            {starredLowStockItems.length > 0 && (
+              <View className="bg-amber-100 rounded-full px-3 py-1 flex-row items-center">
+                <Ionicons name="warning" size={14} color="#F59E0B" />
+                <Text className="text-amber-700 font-semibold text-xs ml-1">
+                  {starredLowStockItems.length} starred low
                 </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => navigation.navigate("Recategorize")}
-                className="bg-teal-100 rounded-full px-3 py-1 flex-row items-center"
-              >
-                <Ionicons name="pricetags" size={14} color="#14B8A6" />
-                <Text className="text-teal-700 font-semibold text-xs ml-1">
-                  Recategorize
-                </Text>
-              </Pressable>
-            </View>
+              </View>
+            )}
+          </View>
+
+          {/* Upload Options Row */}
+          <View className="flex-row gap-2 mb-3">
+            <Pressable
+              onPress={() => navigation.navigate("Import")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="cloud-upload" size={20} color="#4F46E5" />
+              <Text className="text-indigo-600 font-semibold ml-2">Import CSV</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("InvoiceUpload")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="receipt" size={20} color="#7C3AED" />
+              <Text className="text-purple-600 font-semibold ml-2">Invoice</Text>
+            </Pressable>
+          </View>
+
+          {/* Secondary Actions Row */}
+          <View className="flex-row gap-2 mb-3">
+            <Pressable
+              onPress={() => navigation.navigate("InvoiceFolder")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="folder" size={20} color="#DB2777" />
+              <Text className="text-pink-600 font-semibold ml-2">Folder</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("DuplicateFinder")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="copy" size={20} color="#EA580C" />
+              <Text className="text-orange-700 font-semibold ml-2">Duplicates</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("Recategorize")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="pricetags" size={20} color="#14B8A6" />
+              <Text className="text-teal-700 font-semibold ml-2">AI Recategorize</Text>
+            </Pressable>
           </View>
         </View>
 

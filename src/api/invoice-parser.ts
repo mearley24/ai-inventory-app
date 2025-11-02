@@ -6,34 +6,71 @@ const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 /**
  * Parse an invoice image using GPT-4o Vision to extract line items
  * @param imageUri - Local file URI of the invoice image
+ * @param mimeTypeHint - Optional MIME type hint from the picker
  * @returns ParsedInvoice with vendor info and line items
  */
 export async function parseInvoiceImage(
-  imageUri: string
+  imageUri: string,
+  mimeTypeHint?: string
 ): Promise<ParsedInvoice> {
   try {
+    console.log("Parsing invoice with URI:", imageUri);
+    console.log("MIME type hint:", mimeTypeHint);
+
     // Check if this is a PDF file
-    if (imageUri.toLowerCase().endsWith('.pdf') || imageUri.includes('application/pdf')) {
+    if (
+      imageUri.toLowerCase().endsWith('.pdf') ||
+      imageUri.includes('application/pdf') ||
+      mimeTypeHint === 'application/pdf'
+    ) {
       throw new Error(
         "PDF files are not supported yet. Please take a photo or screenshot of your invoice instead."
       );
     }
 
-    // Detect image format from URI
-    let mimeType = "image/jpeg";
-    const lowerUri = imageUri.toLowerCase();
-    if (lowerUri.includes('.png') || lowerUri.includes('image/png')) {
-      mimeType = "image/png";
-    } else if (lowerUri.includes('.gif') || lowerUri.includes('image/gif')) {
-      mimeType = "image/gif";
-    } else if (lowerUri.includes('.webp') || lowerUri.includes('image/webp')) {
-      mimeType = "image/webp";
+    // Get file info to determine the actual file type
+    let mimeType = "image/jpeg"; // Default fallback
+
+    // First try to use the provided MIME type hint
+    if (mimeTypeHint) {
+      if (mimeTypeHint.includes('png')) {
+        mimeType = "image/png";
+      } else if (mimeTypeHint.includes('gif')) {
+        mimeType = "image/gif";
+      } else if (mimeTypeHint.includes('webp')) {
+        mimeType = "image/webp";
+      } else if (mimeTypeHint.includes('jpeg') || mimeTypeHint.includes('jpg')) {
+        mimeType = "image/jpeg";
+      }
+    } else {
+      // Fall back to URI-based detection
+      const lowerUri = imageUri.toLowerCase();
+      if (lowerUri.includes('.png') || lowerUri.includes('image/png')) {
+        mimeType = "image/png";
+      } else if (lowerUri.includes('.gif') || lowerUri.includes('image/gif')) {
+        mimeType = "image/gif";
+      } else if (lowerUri.includes('.webp') || lowerUri.includes('image/webp')) {
+        mimeType = "image/webp";
+      } else if (lowerUri.includes('.jpg') || lowerUri.includes('.jpeg') || lowerUri.includes('image/jpeg')) {
+        mimeType = "image/jpeg";
+      }
+    }
+
+    console.log("Using MIME type:", mimeType);
+
+    // Get file info
+    const fileInfo = await FileSystem.getInfoAsync(imageUri);
+    console.log("File exists:", fileInfo.exists);
+    if (!fileInfo.exists) {
+      throw new Error("Invoice file not found. Please try selecting the file again.");
     }
 
     // Read the image as base64
     const base64Image = await FileSystem.readAsStringAsync(imageUri, {
       encoding: FileSystem.EncodingType.Base64,
     });
+
+    console.log("Base64 length:", base64Image.length);
 
     // Call OpenAI Vision API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {

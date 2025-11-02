@@ -110,7 +110,9 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
     setProcessingMessage("Reading invoice with AI...");
 
     try {
-      const parsed = await parseInvoiceImage(sourceUri);
+      // Pass the MIME type hint if we have a document
+      const mimeTypeHint = selectedDocument?.type;
+      const parsed = await parseInvoiceImage(sourceUri, mimeTypeHint);
       setParsedInvoice(parsed);
 
       // Select all items by default

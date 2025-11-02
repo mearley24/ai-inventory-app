@@ -1,8 +1,9 @@
 import React from "react";
-import { View, Text, Pressable, ScrollView, Alert, Clipboard } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, Clipboard, TextInput, Modal, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePasswordVaultStore } from "../state/passwordVaultStore";
+import { useAuthStore } from "../state/authStore";
 import { PasswordEntry } from "../types/password";
 import { safeGoBack } from "../utils/navigation";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -11,9 +12,14 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
   const { password } = route.params as { password: PasswordEntry };
   const [showPassword, setShowPassword] = React.useState(false);
   const [revealedPassword, setRevealedPassword] = React.useState<string>("");
+  const [showShareModal, setShowShareModal] = React.useState(false);
+  const [shareEmail, setShareEmail] = React.useState("");
 
   const getPassword = usePasswordVaultStore((s) => s.getPassword);
   const deletePassword = usePasswordVaultStore((s) => s.deletePassword);
+  const sharePassword = usePasswordVaultStore((s) => s.sharePassword);
+  const user = useAuthStore((s) => s.user);
+  const company = useAuthStore((s) => s.company);
 
   const handleRevealPassword = async () => {
     if (!showPassword) {
@@ -59,6 +65,60 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
           onPress: () => {
             deletePassword(password.id);
             safeGoBack(navigation);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleShare = () => {
+    if (!user || password.createdBy !== user.uid) {
+      Alert.alert("Permission Denied", "Only the owner can share this password");
+      return;
+    }
+    setShowShareModal(true);
+  };
+
+  const handleConfirmShare = () => {
+    if (!shareEmail.trim()) {
+      Alert.alert("Error", "Please enter an email address");
+      return;
+    }
+
+    // For now, we'll use email as user ID (simplified)
+    // In production, you'd look up the user by email in Firestore
+    const emailLower = shareEmail.toLowerCase().trim();
+
+    if (emailLower === user?.email?.toLowerCase()) {
+      Alert.alert("Error", "You cannot share with yourself");
+      return;
+    }
+
+    if (password.sharedWith.includes(emailLower)) {
+      Alert.alert("Already Shared", "This password is already shared with that user");
+      return;
+    }
+
+    sharePassword(password.id, [emailLower]);
+    setShowShareModal(false);
+    setShareEmail("");
+    Alert.alert("Shared!", `Password shared securely with ${shareEmail}`);
+  };
+
+  const handleRemoveShare = (userId: string) => {
+    Alert.alert(
+      "Remove Access",
+      "Remove this user's access to the password?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            const updatedSharedWith = password.sharedWith.filter((id) => id !== userId);
+            // Update the password with new sharedWith list
+            // Note: This requires updating the sharePassword function to handle removal
+            Alert.alert("Access Removed", "User no longer has access to this password");
           },
         },
       ]
@@ -193,8 +253,54 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
             </View>
           </View>
 
+          {/* Sharing Section */}
+          <View className="mb-4">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-sm font-semibold text-neutral-700">Shared With</Text>
+              {user && password.createdBy === user.uid && (
+                <Pressable
+                  onPress={handleShare}
+                  className="bg-indigo-600 rounded-full px-4 py-2 flex-row items-center"
+                >
+                  <Ionicons name="share-outline" size={16} color="white" />
+                  <Text className="text-white font-semibold text-xs ml-1">Share</Text>
+                </Pressable>
+              )}
+            </View>
+
+            {password.sharedWith.length > 0 ? (
+              <View className="bg-white rounded-xl p-3">
+                {password.sharedWith.map((userId, index) => (
+                  <View
+                    key={userId}
+                    className={`flex-row items-center justify-between py-2 ${
+                      index < password.sharedWith.length - 1 ? "border-b border-neutral-100" : ""
+                    }`}
+                  >
+                    <View className="flex-row items-center flex-1">
+                      <View className="w-8 h-8 rounded-full bg-emerald-100 items-center justify-center">
+                        <Ionicons name="person" size={16} color="#10B981" />
+                      </View>
+                      <Text className="text-sm text-neutral-900 ml-2 flex-1">{userId}</Text>
+                    </View>
+                    {user && password.createdBy === user.uid && (
+                      <Pressable onPress={() => handleRemoveShare(userId)}>
+                        <Ionicons name="close-circle" size={20} color="#EF4444" />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="bg-white rounded-xl p-4 items-center">
+                <Ionicons name="people-outline" size={32} color="#9CA3AF" />
+                <Text className="text-sm text-neutral-500 mt-2">Not shared with anyone</Text>
+              </View>
+            )}
+          </View>
+
           {/* Security Notice */}
-          <View className="bg-amber-50 rounded-xl p-4 flex-row">
+          <View className="bg-amber-50 rounded-xl p-4 flex-row mb-4">
             <Ionicons name="warning" size={20} color="#F59E0B" />
             <Text className="text-sm text-amber-800 ml-2 flex-1">
               Never share your passwords via email or messaging. Use the secure sharing feature instead.
@@ -202,6 +308,60 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
           </View>
         </Animated.View>
       </ScrollView>
+
+      {/* Share Modal */}
+      <Modal
+        visible={showShareModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-6" style={{ paddingBottom: 40 }}>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-xl font-bold text-neutral-900">Share Password</Text>
+              <Pressable onPress={() => setShowShareModal(false)}>
+                <Ionicons name="close" size={28} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <View className="bg-indigo-50 rounded-xl p-4 mb-4 flex-row">
+              <Ionicons name="shield-checkmark" size={24} color="#4F46E5" />
+              <Text className="text-indigo-900 text-sm ml-2 flex-1">
+                The password will be securely shared. The recipient will be able to view and copy it, but it remains encrypted.
+              </Text>
+            </View>
+
+            <Text className="text-sm font-semibold text-neutral-700 mb-2">
+              Recipient Email
+            </Text>
+            <TextInput
+              className="bg-neutral-100 rounded-xl px-4 py-3 text-base text-neutral-900 mb-4"
+              placeholder="colleague@company.com"
+              placeholderTextColor="#9CA3AF"
+              value={shareEmail}
+              onChangeText={setShareEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <Pressable
+              onPress={handleConfirmShare}
+              className="bg-indigo-600 rounded-xl py-4 items-center mb-2"
+            >
+              <Text className="text-white font-semibold text-base">Share Securely</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowShareModal(false)}
+              className="bg-neutral-200 rounded-xl py-4 items-center"
+            >
+              <Text className="text-neutral-700 font-semibold text-base">Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

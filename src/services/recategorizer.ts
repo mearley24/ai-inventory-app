@@ -258,13 +258,22 @@ export async function recategorizeItems(
 
       const prompt = `You are a product categorization expert.
 
-Given these inventory items, categorize each one into the most appropriate category and subcategory from this list:
+Given these inventory items, categorize each one into the most appropriate category and subcategory.
+
+Available categories and subcategories:
 ${flatCategories.join("\n")}
 
 Items to categorize:
 ${JSON.stringify(itemsForAI, null, 2)}
 
-Return ONLY a JSON array with this format (no markdown, no code blocks):
+IMPORTANT: Each category is formatted as "Main Category > Subcategory".
+You must split this into separate category and subcategory fields.
+
+For example, "Audio > Amplifiers" becomes:
+- category: "Audio"
+- subcategory: "Amplifiers"
+
+Return ONLY a JSON array with this exact format (no markdown, no code blocks):
 [
   {
     "id": "item_id",
@@ -274,8 +283,8 @@ Return ONLY a JSON array with this format (no markdown, no code blocks):
 ]
 
 Rules:
+- Split the "Category > Subcategory" format into two separate fields
 - Use the exact category and subcategory names from the list above
-- Format: "Category > Subcategory" from the list
 - Match based on product name and description
 - Return valid JSON only`;
 

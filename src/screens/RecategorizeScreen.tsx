@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useInventoryStore } from "../state/inventoryStore";
-import { recategorizeItems, getCategoriesForWebsite } from "../services/recategorizer";
+import {
+  createJob,
+  executeJob,
+  getActiveJob,
+  clearOldJobs,
+  RecategorizationJob
+} from "../services/recategorizationTask";
 import { safeGoBack } from "../utils/navigation";
-
-interface CategoryStructure {
-  [category: string]: string[];
-}
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -29,12 +31,69 @@ export default function RecategorizeScreen({ navigation }: Props) {
   const bulkUpdateCategories = useInventoryStore((s) => s.bulkUpdateCategories);
 
   const [websiteUrl, setWebsiteUrl] = useState("https://www.snapav.com");
-  const [categoryStructure, setCategoryStructure] = useState<CategoryStructure>({});
-  const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState("");
-  const [results, setResults] = useState<
-    { id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[]
-  >([]);
+  const [activeJob, setActiveJob] = useState<RecategorizationJob | null>(null);
+  const [canNavigateAway, setCanNavigateAway] = useState(false);
+
+  // Check for active job on mount
+  useEffect(() => {
+    const checkActiveJob = async () => {
+      const job = await getActiveJob();
+      if (job) {
+        setActiveJob(job);
+        // If job is running, continue monitoring it
+        if (job.status === "running") {
+          setCanNavigateAway(true);
+          monitorJob(job.id);
+        }
+      }
+      // Clean up old jobs
+      await clearOldJobs();
+    };
+    checkActiveJob();
+  }, []);
+
+  // Monitor job progress
+  const monitorJob = async (jobId: string) => {
+    const checkInterval = setInterval(async () => {
+      const job = await getActiveJob();
+
+      if (!job || job.id !== jobId) {
+        clearInterval(checkInterval);
+        return;
+      }
+
+      setActiveJob(job);
+
+      if (job.status === "completed") {
+        clearInterval(checkInterval);
+
+        // Apply changes to inventory
+        if (job.changes.length > 0) {
+          const updates = job.changes.map((r) => ({
+            id: r.id,
+            category: r.newCategory,
+            subcategory: r.newSubcategory,
+          }));
+          bulkUpdateCategories(updates);
+
+          Alert.alert(
+            "Complete!",
+            `Successfully recategorized ${job.changes.length} items with categories and subcategories.`,
+            [{ text: "OK" }]
+          );
+        }
+      } else if (job.status === "failed") {
+        clearInterval(checkInterval);
+        Alert.alert(
+          "Error",
+          job.error || "Recategorization failed. Please try again."
+        );
+      }
+    }, 1000); // Check every second
+
+    // Clean up interval when component unmounts
+    return () => clearInterval(checkInterval);
+  };
 
   const handleRecategorize = async () => {
     if (items.length === 0) {
@@ -49,69 +108,39 @@ export default function RecategorizeScreen({ navigation }: Props) {
 
     Alert.alert(
       "Recategorize All Items",
-      `This will:\n1. Extract categories from ${websiteUrl}\n2. Analyze all ${items.length} items\n3. Auto-update categories to match website\n\nContinue?`,
+      `This will run in the background:\n\n1. Extract categories from ${websiteUrl}\n2. Analyze all ${items.length} items with AI\n3. Auto-update categories & subcategories\n\nYou can continue using the app while this runs!`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Start",
+          text: "Start in Background",
           onPress: async () => {
-            setProcessing(true);
-            setProgress("Extracting categories from website...");
-            setResults([]);
-
             try {
-              // Step 1: Extract categories from website
-              const extractedCategories = await getCategoriesForWebsite(websiteUrl);
-              setCategoryStructure(extractedCategories);
-              const categoryCount = Object.keys(extractedCategories).length;
-              setProgress(`Found ${categoryCount} main categories`);
+              // Create background job
+              const job = await createJob(websiteUrl, items.length);
+              setActiveJob(job);
+              setCanNavigateAway(true);
 
-              // Step 2: Recategorize items
-              const changes = await recategorizeItems(
-                items,
-                extractedCategories,
-                (msg: string, current: number, total: number) => {
-                  setProgress(msg);
-                }
+              // Start monitoring
+              monitorJob(job.id);
+
+              // Execute job in background
+              executeJob(job.id, items, (updatedJob) => {
+                setActiveJob(updatedJob);
+              });
+
+              Alert.alert(
+                "Started!",
+                "Recategorization is running in the background. You can navigate away and check progress later.",
+                [{ text: "OK" }]
               );
-
-              setResults(changes);
-
-              // Step 3: Auto-apply changes
-              if (changes.length > 0) {
-                const updates = changes.map((r) => ({
-                  id: r.id,
-                  category: r.newCategory,
-                  subcategory: r.newSubcategory,
-                }));
-
-                bulkUpdateCategories(updates);
-
-                setProgress(`Complete! Updated ${changes.length} items`);
-                Alert.alert(
-                  "Success!",
-                  `✅ Extracted ${categoryCount} categories\n✅ Updated ${changes.length} items automatically\n\nAll items now have categories and subcategories!`,
-                  [{ text: "OK", onPress: () => safeGoBack(navigation) }]
-                );
-              } else {
-                setProgress("Complete! All items already in correct categories");
-                Alert.alert(
-                  "No Changes Needed",
-                  "All items are already in the correct categories!",
-                  [{ text: "OK", onPress: () => safeGoBack(navigation) }]
-                );
-              }
             } catch (error) {
-              console.error("Recategorization error:", error);
+              console.error("Error starting recategorization:", error);
               Alert.alert(
                 "Error",
                 error instanceof Error
                   ? error.message
-                  : "Failed to recategorize items. Please try again."
+                  : "Failed to start recategorization. Please try again."
               );
-              setProgress("");
-            } finally {
-              setProcessing(false);
             }
           },
         },
@@ -188,20 +217,22 @@ export default function RecategorizeScreen({ navigation }: Props) {
             <Text className="text-white/90 text-sm">
               Total Items: {items.length}
             </Text>
-            {Object.keys(categoryStructure).length > 0 && (
-              <Text className="text-white/90 text-sm">
-                Categories Found: {Object.keys(categoryStructure).length}
-              </Text>
-            )}
-            {results.length > 0 && (
-              <Text className="text-white/90 text-sm">
-                Items Updated: {results.length}
-              </Text>
+            {activeJob && (
+              <>
+                <Text className="text-white/90 text-sm">
+                  Processed: {activeJob.processedItems} / {activeJob.totalItems}
+                </Text>
+                {activeJob.changes.length > 0 && (
+                  <Text className="text-white/90 text-sm">
+                    Items Updated: {activeJob.changes.length}
+                  </Text>
+                )}
+              </>
             )}
           </View>
 
           {/* Start Button */}
-          {!processing && results.length === 0 && (
+          {!activeJob && (
             <Pressable
               onPress={handleRecategorize}
               className="bg-white rounded-2xl p-4 items-center mb-4"
@@ -211,30 +242,38 @@ export default function RecategorizeScreen({ navigation }: Props) {
                 Auto-Recategorize All
               </Text>
               <Text className="text-gray-600 text-sm mt-1">
-                Extract categories and update all {items.length} items
+                Runs in background - you can continue using the app!
               </Text>
             </Pressable>
           )}
 
           {/* Processing */}
-          {processing && (
+          {activeJob && activeJob.status === "running" && (
             <View className="bg-white/20 rounded-2xl p-6 items-center mb-4">
               <ActivityIndicator size="large" color="white" />
               <Text className="text-white text-base font-semibold mt-4">
-                {progress}
+                Processing in Background
               </Text>
+              <Text className="text-white/90 text-sm mt-2 text-center">
+                {activeJob.processedItems} of {activeJob.totalItems} items analyzed
+              </Text>
+              {canNavigateAway && (
+                <Text className="text-white/70 text-xs mt-4 text-center">
+                  You can safely navigate away. We will notify you when complete.
+                </Text>
+              )}
             </View>
           )}
 
           {/* Success Message */}
-          {!processing && results.length > 0 && (
+          {activeJob && activeJob.status === "completed" && (
             <View className="bg-green-100 rounded-2xl p-6 items-center mb-4">
               <Ionicons name="checkmark-circle" size={64} color="#10B981" />
               <Text className="text-green-800 text-lg font-semibold mt-4">
                 Successfully Updated!
               </Text>
               <Text className="text-green-700 text-sm mt-2 text-center">
-                {results.length} items have been automatically recategorized to match the website.
+                {activeJob.changes.length} items have been recategorized with categories and subcategories.
               </Text>
               <Pressable
                 onPress={() => safeGoBack(navigation)}
@@ -242,6 +281,30 @@ export default function RecategorizeScreen({ navigation }: Props) {
               >
                 <Text className="text-white font-semibold">
                   Done
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Error Message */}
+          {activeJob && activeJob.status === "failed" && (
+            <View className="bg-red-100 rounded-2xl p-6 items-center mb-4">
+              <Ionicons name="alert-circle" size={64} color="#EF4444" />
+              <Text className="text-red-800 text-lg font-semibold mt-4">
+                Error Occurred
+              </Text>
+              <Text className="text-red-700 text-sm mt-2 text-center">
+                {activeJob.error || "An unknown error occurred"}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setActiveJob(null);
+                  setCanNavigateAway(false);
+                }}
+                className="bg-red-600 rounded-xl px-6 py-3 mt-4"
+              >
+                <Text className="text-white font-semibold">
+                  Try Again
                 </Text>
               </Pressable>
             </View>

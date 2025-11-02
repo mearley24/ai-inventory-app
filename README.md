@@ -141,7 +141,8 @@ src/
 ├── services/         # Background services
 │   ├── invoiceScanner.ts        # Invoice folder scanning logic
 │   ├── invoiceScannerTask.ts    # Background task for hourly scans
-│   └── recategorizer.ts         # AI recategorization with subcategories
+│   ├── recategorizer.ts         # AI recategorization with subcategories
+│   └── recategorizationTask.ts  # Background job system for recategorization
 ├── config/           # Configuration
 │   └── firebase.ts              # Firebase initialization
 └── utils/            # Utility functions
@@ -226,17 +227,18 @@ The invoice folder is created automatically at app startup. Access it via the fo
 
 ## AI-Powered Recategorization ⭐ NEW!
 
-Automatically update all inventory items to match precise categories and subcategories from any supplier website.
+Automatically update all inventory items to match precise categories and subcategories from any supplier website. **Runs in the background** - you can continue using the app!
 
 **How it Works:**
 1. Navigate to Inventory screen → Tap the "⚙️" menu → Select "Recategorize"
 2. Enter the supplier website URL (e.g., snapav.com, adorama.com, bhphotovideo.com)
 3. Tap "Auto-Recategorize All"
-4. AI will:
+4. Process starts in the background:
    - Extract category structure from the website (or use predefined categories)
    - Analyze all inventory items by name and description
    - Automatically assign correct category AND subcategory to each item
    - Apply all changes immediately
+5. Continue using the app - you'll get a notification when complete!
 
 **Supported Suppliers:**
 - **SnapAV/Snap One** - 18 main categories with 5-7 subcategories each:
@@ -248,11 +250,13 @@ Automatically update all inventory items to match precise categories and subcate
 - **Generic Categories** - For any other supplier
 
 **Features:**
+- **Background Processing** - Navigate away and keep using the app while AI works
 - **Fully Automatic** - No manual review needed, changes apply immediately
 - **Subcategory Support** - Items get both main category and precise subcategory
 - **Batch Processing** - Handles large inventories efficiently (20 items at a time)
 - **Real-time Progress** - See status updates as AI processes your items
 - **Smart Matching** - Uses GPT-4o-mini to analyze product names and descriptions
+- **Job Persistence** - If you close the app, the job continues where it left off
 
 **Best Use Cases:**
 - Just imported a large invoice or CSV and need to organize everything

@@ -1,18 +1,24 @@
 import React from "react";
-import { View, Text, Pressable, Platform } from "react-native";
+import { View, Text, Pressable, Platform, Alert, FlatList, Modal } from "react-native";
 import { CameraView, useCameraPermissions, CameraType } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
+import { InventoryItem } from "../types/inventory";
 
 export default function ScannerScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = React.useState(false);
   const [scannedData, setScannedData] = React.useState("");
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [showItemPicker, setShowItemPicker] = React.useState(false);
+  const [searchResults, setSearchResults] = React.useState<InventoryItem[]>([]);
+
   const getItemByBarcode = useInventoryStore((s) => s.getItemByBarcode);
+  const items = useInventoryStore((s) => s.items);
   const addItem = useInventoryStore((s) => s.addItem);
+  const updateItem = useInventoryStore((s) => s.updateItem);
 
   const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
     if (scanned || isProcessing) return;
@@ -21,11 +27,11 @@ export default function ScannerScreen({ navigation }: any) {
     setScannedData(data);
     setIsProcessing(true);
 
-    // Check if item already exists
+    // Check if item already exists with this barcode
     const existingItem = getItemByBarcode(data);
 
     if (existingItem) {
-      // Item exists, show it
+      // Item exists with this barcode, show it
       setIsProcessing(false);
       setTimeout(() => {
         navigation.navigate("EditItem", { item: existingItem });
@@ -33,31 +39,87 @@ export default function ScannerScreen({ navigation }: any) {
         setScannedData("");
       }, 500);
     } else {
-      // New item, use AI to identify
-      try {
-        const productInfo = await identifyProduct(data);
-        setIsProcessing(false);
+      // Check if barcode matches any SKU/model in descriptions or names
+      const matchingItems = items.filter(
+        (item) =>
+          item.barcode?.toLowerCase().includes(data.toLowerCase()) ||
+          item.name.toLowerCase().includes(data.toLowerCase()) ||
+          item.description?.toLowerCase().includes(data.toLowerCase())
+      );
 
-        // Navigate to add item with pre-filled data
-        setTimeout(() => {
-          navigation.navigate("AddItem", {
-            barcode: data,
-            suggestedName: productInfo.name,
-            suggestedCategory: productInfo.category,
-          });
-          setScanned(false);
-          setScannedData("");
-        }, 500);
-      } catch (error) {
+      if (matchingItems.length > 0) {
+        // Found potential matches - let user choose
+        setSearchResults(matchingItems);
+        setShowItemPicker(true);
         setIsProcessing(false);
-        // Navigate to add item with just barcode
-        setTimeout(() => {
-          navigation.navigate("AddItem", { barcode: data });
-          setScanned(false);
-          setScannedData("");
-        }, 500);
+      } else {
+        // No matches, use AI to identify new product
+        try {
+          const productInfo = await identifyProduct(data);
+          setIsProcessing(false);
+
+          // Navigate to add item with pre-filled data
+          setTimeout(() => {
+            navigation.navigate("AddItem", {
+              barcode: data,
+              suggestedName: productInfo.name,
+              suggestedCategory: productInfo.category,
+            });
+            setScanned(false);
+            setScannedData("");
+          }, 500);
+        } catch (error) {
+          setIsProcessing(false);
+          // Navigate to add item with just barcode
+          setTimeout(() => {
+            navigation.navigate("AddItem", { barcode: data });
+            setScanned(false);
+            setScannedData("");
+          }, 500);
+        }
       }
     }
+  };
+
+  const handleSelectItem = (item: InventoryItem) => {
+    // Associate this barcode with the selected item
+    Alert.alert(
+      "Link Barcode",
+      `Link barcode ${scannedData} to ${item.name}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {
+            setShowItemPicker(false);
+            setSearchResults([]);
+            setScanned(false);
+            setScannedData("");
+          },
+        },
+        {
+          text: "Link",
+          onPress: () => {
+            updateItem(item.id, { barcode: scannedData });
+            setShowItemPicker(false);
+            setSearchResults([]);
+            setTimeout(() => {
+              navigation.navigate("EditItem", { item: { ...item, barcode: scannedData } });
+              setScanned(false);
+              setScannedData("");
+            }, 300);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCreateNew = () => {
+    setShowItemPicker(false);
+    setSearchResults([]);
+    navigation.navigate("AddItem", { barcode: scannedData });
+    setScanned(false);
+    setScannedData("");
   };
 
   const identifyProduct = async (barcode: string) => {
@@ -210,6 +272,93 @@ export default function ScannerScreen({ navigation }: any) {
           </Animated.View>
         )}
       </View>
+
+      {/* Item Picker Modal */}
+      <Modal
+        visible={showItemPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowItemPicker(false);
+          setSearchResults([]);
+          setScanned(false);
+          setScannedData("");
+        }}
+      >
+        <View className="flex-1 bg-black/50">
+          <View className="flex-1 mt-20">
+            <View className="flex-1 bg-white rounded-t-3xl">
+              {/* Header */}
+              <View className="px-6 pt-6 pb-4 border-b border-neutral-200">
+                <Text className="text-2xl font-bold text-neutral-900 mb-2">
+                  Link Barcode
+                </Text>
+                <Text className="text-sm text-neutral-600">
+                  Found {searchResults.length} matching {searchResults.length === 1 ? "item" : "items"}. Select one to link barcode &ldquo;{scannedData}&rdquo;
+                </Text>
+              </View>
+
+              {/* Item List */}
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ padding: 16 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleSelectItem(item)}
+                    className="bg-neutral-50 rounded-xl p-4 mb-3 flex-row items-center"
+                  >
+                    <View className="w-12 h-12 rounded-full bg-indigo-100 items-center justify-center mr-4">
+                      <Ionicons name="cube" size={24} color="#4F46E5" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-lg font-semibold text-neutral-900">
+                        {item.name}
+                      </Text>
+                      <View className="flex-row items-center mt-1">
+                        <View className="bg-neutral-200 rounded-full px-2 py-1 mr-2">
+                          <Text className="text-xs font-medium text-neutral-700">
+                            {item.category}
+                          </Text>
+                        </View>
+                        <Text className="text-sm text-neutral-500">
+                          Qty: {item.quantity}
+                        </Text>
+                      </View>
+                    </View>
+                    <Ionicons name="link" size={24} color="#4F46E5" />
+                  </Pressable>
+                )}
+              />
+
+              {/* Action Buttons */}
+              <View className="px-6 pb-6 pt-4 border-t border-neutral-200">
+                <Pressable
+                  onPress={handleCreateNew}
+                  className="bg-indigo-600 rounded-xl py-4 items-center mb-3"
+                >
+                  <Text className="text-white font-semibold text-base">
+                    Create New Item
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setShowItemPicker(false);
+                    setSearchResults([]);
+                    setScanned(false);
+                    setScannedData("");
+                  }}
+                  className="bg-neutral-200 rounded-xl py-4 items-center"
+                >
+                  <Text className="text-neutral-700 font-semibold text-base">
+                    Cancel
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

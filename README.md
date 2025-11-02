@@ -46,9 +46,17 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - Fast, reliable barcode scanning using the device camera
 - Supports multiple barcode formats: QR codes, UPC, EAN, Code 39, Code 128, PDF417
 - AI-powered product identification from barcodes using GPT-4
+- **🧠 Smart Barcode Learning** - Automatically links barcodes to existing items
 - Automatically suggests product names and categories
 - Instantly adds scanned items to inventory
 - Beautiful scanning interface with visual frame guidance
+
+**Barcode Learning System:**
+- Scan a barcode → System checks if it matches any existing item (by name, description, or SKU)
+- If matches found → Choose which item to link the barcode to
+- Next scan → Goes directly to that item!
+- Import barcodes from D-Tools (Model/Part Number) or CSV files (Barcode/SKU/UPC columns)
+- Manual barcode entry in item edit screen
 
 ### ⏱️ Time Tracker
 - Create and manage multiple projects

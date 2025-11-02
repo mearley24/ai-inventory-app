@@ -253,9 +253,13 @@ export default function InventoryScreen({ navigation }: any) {
               <Ionicons name="copy" size={20} color="#EA580C" />
               <Text className="text-orange-700 font-semibold ml-2">Duplicates</Text>
             </Pressable>
+          </View>
+
+          {/* AI Recategorize - Full Width */}
+          <View className="mb-3">
             <Pressable
               onPress={() => navigation.navigate("Recategorize")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -264,7 +268,7 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="pricetags" size={20} color="#14B8A6" />
+              <Ionicons name="sparkles" size={20} color="#14B8A6" />
               <Text className="text-teal-700 font-semibold ml-2">AI Recategorize</Text>
             </Pressable>
           </View>

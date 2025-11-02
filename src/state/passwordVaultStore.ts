@@ -3,26 +3,41 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PasswordEntry, PasswordCategory, PasswordPermission } from "../types/password";
 import { encryptPassword, decryptPassword } from "../utils/encryption";
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
+import { firestore } from "../config/firebase";
 
 interface PasswordVaultState {
   passwords: PasswordEntry[];
   isLocked: boolean;
   lastUnlockTime: number;
+  unsubscribe: (() => void) | null;
 
   // Actions
+  initializeSync: (userId: string, companyId: string) => void;
+  stopSync: () => void;
   addPassword: (
     password: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt" | "accessCount" | "encryptedPassword"> & { plainPassword: string }
   ) => Promise<void>;
   updatePassword: (id: string, updates: Partial<Omit<PasswordEntry, "id" | "encryptedPassword">> & { plainPassword?: string }) => Promise<void>;
-  deletePassword: (id: string) => void;
+  deletePassword: (id: string) => Promise<void>;
   getPassword: (id: string) => Promise<string | null>;
-  sharePassword: (id: string, userIds: string[], permission?: PasswordPermission) => void;
-  shareMultiplePasswords: (passwordIds: string[], userId: string, permission: PasswordPermission) => void;
+  sharePassword: (id: string, userIds: string[], permission?: PasswordPermission) => Promise<void>;
+  shareMultiplePasswords: (passwordIds: string[], userId: string, permission: PasswordPermission) => Promise<void>;
   lockVault: () => void;
   unlockVault: () => void;
   getPasswordsByCategory: (category: PasswordCategory) => PasswordEntry[];
   searchPasswords: (query: string) => PasswordEntry[];
-  logAccess: (passwordId: string, action: "viewed" | "copied" | "autofilled") => void;
+  logAccess: (passwordId: string, action: "viewed" | "copied" | "autofilled") => Promise<void>;
 }
 
 export const usePasswordVaultStore = create<PasswordVaultState>()(
@@ -31,6 +46,43 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
       passwords: [],
       isLocked: false,
       lastUnlockTime: Date.now(),
+      unsubscribe: null,
+
+      initializeSync: (userId: string, companyId: string) => {
+        // Stop any existing listener
+        const currentUnsub = get().unsubscribe;
+        if (currentUnsub) currentUnsub();
+
+        // Set up real-time listener for passwords user has access to
+        const passwordsRef = collection(firestore, "passwords");
+        const q = query(passwordsRef, where("companyId", "==", companyId));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const passwords: PasswordEntry[] = [];
+          snapshot.forEach((doc) => {
+            const pwd = doc.data() as PasswordEntry;
+            // Only include passwords user has access to
+            if (
+              pwd.createdBy === userId ||
+              pwd.sharedWith.includes(userId) ||
+              pwd.sharedWith.includes(userId) // Check by email too
+            ) {
+              passwords.push(pwd);
+            }
+          });
+          set({ passwords });
+        });
+
+        set({ unsubscribe });
+      },
+
+      stopSync: () => {
+        const unsub = get().unsubscribe;
+        if (unsub) {
+          unsub();
+          set({ unsubscribe: null });
+        }
+      },
 
       addPassword: async (password) => {
         const encryptedPassword = await encryptPassword(password.plainPassword);
@@ -42,6 +94,11 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
           updatedAt: Date.now(),
           accessCount: 0,
         };
+
+        // Save to Firestore
+        await setDoc(doc(firestore, "passwords", newPassword.id), newPassword);
+
+        // Update local state
         set((state) => ({ passwords: [...state.passwords, newPassword] }));
       },
 
@@ -53,21 +110,30 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
           encryptedPassword = await encryptPassword(plainPassword);
         }
 
+        const updateData = {
+          ...otherUpdates,
+          ...(encryptedPassword && { encryptedPassword }),
+          updatedAt: Date.now(),
+        };
+
+        // Update Firestore
+        await updateDoc(doc(firestore, "passwords", id), updateData);
+
+        // Update local state
         set((state) => ({
           passwords: state.passwords.map((pwd) =>
             pwd.id === id
-              ? {
-                  ...pwd,
-                  ...otherUpdates,
-                  ...(encryptedPassword && { encryptedPassword }),
-                  updatedAt: Date.now(),
-                }
+              ? { ...pwd, ...updateData }
               : pwd
           ),
         }));
       },
 
-      deletePassword: (id) => {
+      deletePassword: async (id) => {
+        // Delete from Firestore
+        await deleteDoc(doc(firestore, "passwords", id));
+
+        // Update local state
         set((state) => ({
           passwords: state.passwords.filter((pwd) => pwd.id !== id),
         }));
@@ -88,25 +154,51 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
         }
       },
 
-      sharePassword: (id, userIds, permission = "use") => {
+      sharePassword: async (id, userIds, permission = "use") => {
+        const password = get().passwords.find((p) => p.id === id);
+        if (!password) return;
+
+        const updateData = {
+          sharedWith: [...new Set([...password.sharedWith, ...userIds])],
+          sharedPermissions: {
+            ...password.sharedPermissions,
+            ...userIds.reduce((acc, userId) => ({ ...acc, [userId]: permission }), {}),
+          },
+          updatedAt: Date.now(),
+        };
+
+        // Update Firestore
+        await updateDoc(doc(firestore, "passwords", id), updateData);
+
+        // Update local state
         set((state) => ({
           passwords: state.passwords.map((pwd) =>
-            pwd.id === id
-              ? {
-                  ...pwd,
-                  sharedWith: [...new Set([...pwd.sharedWith, ...userIds])],
-                  sharedPermissions: {
-                    ...pwd.sharedPermissions,
-                    ...userIds.reduce((acc, userId) => ({ ...acc, [userId]: permission }), {}),
-                  },
-                  updatedAt: Date.now(),
-                }
-              : pwd
+            pwd.id === id ? { ...pwd, ...updateData } : pwd
           ),
         }));
       },
 
-      shareMultiplePasswords: (passwordIds, userId, permission) => {
+      shareMultiplePasswords: async (passwordIds, userId, permission) => {
+        // Update each password in Firestore
+        const updatePromises = passwordIds.map(async (passwordId) => {
+          const password = get().passwords.find((p) => p.id === passwordId);
+          if (!password) return;
+
+          const updateData = {
+            sharedWith: [...new Set([...password.sharedWith, userId])],
+            sharedPermissions: {
+              ...password.sharedPermissions,
+              [userId]: permission,
+            },
+            updatedAt: Date.now(),
+          };
+
+          await updateDoc(doc(firestore, "passwords", passwordId), updateData);
+        });
+
+        await Promise.all(updatePromises);
+
+        // Update local state
         set((state) => ({
           passwords: state.passwords.map((pwd) =>
             passwordIds.includes(pwd.id)
@@ -148,15 +240,23 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
         );
       },
 
-      logAccess: (passwordId, action) => {
+      logAccess: async (passwordId, action) => {
+        const password = get().passwords.find((p) => p.id === passwordId);
+        if (!password) return;
+
+        const updateData = {
+          lastAccessed: Date.now(),
+          accessCount: password.accessCount + 1,
+        };
+
+        // Update Firestore
+        await updateDoc(doc(firestore, "passwords", passwordId), updateData);
+
+        // Update local state
         set((state) => ({
           passwords: state.passwords.map((pwd) =>
             pwd.id === passwordId
-              ? {
-                  ...pwd,
-                  lastAccessed: Date.now(),
-                  accessCount: pwd.accessCount + 1,
-                }
+              ? { ...pwd, ...updateData }
               : pwd
           ),
         }));

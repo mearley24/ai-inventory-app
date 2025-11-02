@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { auth, firestore } from "../config/firebase";
 import { User, Company, UserRole } from "../types/auth";
+import { usePasswordVaultStore } from "./passwordVaultStore";
 
 interface AuthState {
   user: User | null;
@@ -70,6 +71,9 @@ export const useAuthStore = create<AuthState>()(
                     set({ company: companyDoc.data() as Company });
                   }
                 }
+
+                // Initialize password vault sync
+                usePasswordVaultStore.getState().initializeSync(userData.uid, userData.companyId);
               } else {
                 set({ user: null, company: null, isAuthenticated: false, loading: false });
               }
@@ -78,6 +82,8 @@ export const useAuthStore = create<AuthState>()(
               set({ error: error.message, loading: false });
             }
           } else {
+            // Stop password vault sync when user signs out
+            usePasswordVaultStore.getState().stopSync();
             set({ user: null, company: null, isAuthenticated: false, loading: false });
           }
         });
@@ -143,6 +149,10 @@ export const useAuthStore = create<AuthState>()(
       signOut: async () => {
         try {
           set({ loading: true, error: null });
+
+          // Stop password vault sync
+          usePasswordVaultStore.getState().stopSync();
+
           await firebaseSignOut(auth);
           set({ user: null, company: null, isAuthenticated: false, loading: false });
         } catch (error: any) {

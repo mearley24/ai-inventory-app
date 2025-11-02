@@ -10,6 +10,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
 export default function ImportScreen({ navigation }: any) {
   const [importing, setImporting] = React.useState(false);
+  const [processingMessage, setProcessingMessage] = React.useState("");
   const [importResult, setImportResult] = React.useState<{ success: number; failed: number } | null>(null);
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
@@ -145,24 +146,66 @@ export default function ImportScreen({ navigation }: any) {
 
       const file = result.assets[0];
 
+      // Add a small delay to let the UI update
+      setProcessingMessage("Reading file...");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Parse Excel or CSV
+      setProcessingMessage("Parsing data...");
       const parsedItems = await parseExcelOrCSV(file.uri, file.mimeType);
 
       if (parsedItems.length === 0) {
         Alert.alert("No Items Found", "Could not find any valid items in the file. Make sure your file has columns like: Name, Price, Quantity, Category");
         setImporting(false);
+        setProcessingMessage("");
         return;
       }
 
-      // Add items to store
-      addItems(parsedItems);
-
-      setImportResult({ success: parsedItems.length, failed: 0 });
-      setImporting(false);
+      // Show alert if importing many items
+      if (parsedItems.length > 100) {
+        setImporting(false);
+        setProcessingMessage("");
+        Alert.alert(
+          "Large Import",
+          `You are about to import ${parsedItems.length} items. This may take a moment.`,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Continue",
+              onPress: async () => {
+                setImporting(true);
+                setProcessingMessage("Importing items...");
+                // Add items in batches to prevent freezing
+                const batchSize = 50;
+                for (let i = 0; i < parsedItems.length; i += batchSize) {
+                  const batch = parsedItems.slice(i, i + batchSize);
+                  addItems(batch);
+                  setProcessingMessage(`Importing items... ${Math.min(i + batchSize, parsedItems.length)}/${parsedItems.length}`);
+                  await new Promise((resolve) => setTimeout(resolve, 10));
+                }
+                setImportResult({ success: parsedItems.length, failed: 0 });
+                setImporting(false);
+                setProcessingMessage("");
+              },
+            },
+          ]
+        );
+      } else {
+        // Add items to store
+        setProcessingMessage("Importing items...");
+        addItems(parsedItems);
+        setImportResult({ success: parsedItems.length, failed: 0 });
+        setImporting(false);
+        setProcessingMessage("");
+      }
     } catch (error) {
       console.error("Import error:", error);
       Alert.alert("Import Failed", "There was an error importing your file. Please make sure it is a valid CSV or Excel file.");
       setImporting(false);
+      setProcessingMessage("");
     }
   };
 
@@ -230,10 +273,10 @@ export default function ImportScreen({ navigation }: any) {
             >
               <Ionicons name="cloud-upload" size={48} color="white" />
               <Text className="text-white text-xl font-bold mt-3">
-                {importing ? "Importing..." : "Select File"}
+                {importing ? processingMessage || "Importing..." : "Select File"}
               </Text>
               <Text className="text-white/80 text-sm mt-1">
-                CSV or Excel (.xls, .xlsx)
+                {importing ? "Please wait..." : "CSV or Excel (.xls, .xlsx)"}
               </Text>
             </Pressable>
 

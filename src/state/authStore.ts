@@ -20,6 +20,7 @@ import {
 import { auth, firestore } from "../config/firebase";
 import { User, Company, UserRole } from "../types/auth";
 import { usePasswordVaultStore } from "./passwordVaultStore";
+import { useInventoryStore } from "./inventoryStore";
 
 interface AuthState {
   user: User | null;
@@ -74,6 +75,9 @@ export const useAuthStore = create<AuthState>()(
 
                 // Initialize password vault sync
                 usePasswordVaultStore.getState().initializeSync(userData.uid, userData.companyId);
+
+                // Initialize inventory sync
+                useInventoryStore.getState().initializeSync(userData.companyId);
               } else {
                 set({ user: null, company: null, isAuthenticated: false, loading: false });
               }
@@ -84,6 +88,10 @@ export const useAuthStore = create<AuthState>()(
           } else {
             // Stop password vault sync when user signs out
             usePasswordVaultStore.getState().stopSync();
+
+            // Stop inventory sync when user signs out
+            useInventoryStore.getState().stopSync();
+
             set({ user: null, company: null, isAuthenticated: false, loading: false });
           }
         });
@@ -152,6 +160,9 @@ export const useAuthStore = create<AuthState>()(
 
           // Stop password vault sync
           usePasswordVaultStore.getState().stopSync();
+
+          // Stop inventory sync
+          useInventoryStore.getState().stopSync();
 
           await firebaseSignOut(auth);
           set({ user: null, company: null, isAuthenticated: false, loading: false });

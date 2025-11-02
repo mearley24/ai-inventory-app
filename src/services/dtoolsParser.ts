@@ -3,7 +3,7 @@ import { InventoryItem } from "../types/inventory";
 import { Project } from "../types/inventory";
 
 export interface DToolsImportResult {
-  items: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">[];
+  items: Omit<InventoryItem, "id" | "createdAt" | "updatedAt" | "companyId">[];
   projects: Omit<Project, "id" | "createdAt" | "totalTime">[];
   errors: string[];
 }
@@ -114,7 +114,7 @@ export async function parseDToolsFile(fileUri: string): Promise<DToolsImportResu
         }
 
         // Create inventory item
-        const item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt"> = {
+        const item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt" | "companyId"> = {
           name: fullName,
           quantity,
           category: mapDToolsCategory(category),

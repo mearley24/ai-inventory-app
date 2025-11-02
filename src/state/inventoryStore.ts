@@ -1,64 +1,140 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+  updateDoc,
+} from "firebase/firestore";
+import { firestore } from "../config/firebase";
 import { InventoryItem } from "../types/inventory";
 
 interface InventoryState {
   items: InventoryItem[];
-  addItem: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
-  addItems: (items: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">[]) => void;
-  updateItem: (id: string, updates: Partial<InventoryItem>) => void;
-  deleteItem: (id: string) => void;
+  unsubscribe: (() => void) | null;
+  currentCompanyId: string | null;
+
+  initializeSync: (companyId: string) => void;
+  stopSync: () => void;
+  addItem: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt" | "companyId">) => Promise<void>;
+  addItems: (items: Omit<InventoryItem, "id" | "createdAt" | "updatedAt" | "companyId">[]) => Promise<void>;
+  updateItem: (id: string, updates: Partial<InventoryItem>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   clearAll: () => void;
   getItemByBarcode: (barcode: string) => InventoryItem | undefined;
   getLowStockItems: () => InventoryItem[];
-  toggleStarred: (id: string) => void;
+  toggleStarred: (id: string) => Promise<void>;
   getStarredLowStockItems: () => InventoryItem[];
   findDuplicates: () => InventoryItem[][];
-  mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => void;
-  autoMergeAllDuplicates: () => { merged: number; removed: number };
-  bulkUpdateCategories: (updates: { id: string; category: string; subcategory?: string }[]) => void;
-  assignToProject: (itemId: string, projectId: string | undefined) => void;
+  mergeDuplicates: (itemsToMerge: InventoryItem[], keepItem: InventoryItem) => Promise<void>;
+  autoMergeAllDuplicates: () => Promise<{ merged: number; removed: number }>;
+  bulkUpdateCategories: (updates: { id: string; category: string; subcategory?: string }[]) => Promise<void>;
+  assignToProject: (itemId: string, projectId: string | undefined) => Promise<void>;
   getItemsByProject: (projectId: string) => InventoryItem[];
-  unassignFromProject: (itemId: string) => void;
+  unassignFromProject: (itemId: string) => Promise<void>;
 }
 
 export const useInventoryStore = create<InventoryState>()(
   persist(
     (set, get) => ({
       items: [],
+      unsubscribe: null,
+      currentCompanyId: null,
 
-      addItem: (item) => {
+      initializeSync: (companyId: string) => {
+        const itemsRef = collection(firestore, "inventory");
+        const q = query(itemsRef, where("companyId", "==", companyId));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const items: InventoryItem[] = [];
+          snapshot.forEach((doc) => {
+            items.push(doc.data() as InventoryItem);
+          });
+          set({ items });
+        });
+
+        set({ unsubscribe, currentCompanyId: companyId });
+      },
+
+      stopSync: () => {
+        const { unsubscribe } = get();
+        if (unsubscribe) {
+          unsubscribe();
+          set({ unsubscribe: null, currentCompanyId: null });
+        }
+      },
+
+      addItem: async (item) => {
+        const { currentCompanyId } = get();
+        if (!currentCompanyId) {
+          throw new Error("No company ID set. Please log in first.");
+        }
+
         const newItem: InventoryItem = {
           ...item,
+          companyId: currentCompanyId,
           id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
+
+        // Save to Firestore
+        await setDoc(doc(firestore, "inventory", newItem.id), newItem);
+
+        // Update local state
         set((state) => ({ items: [...state.items, newItem] }));
       },
 
-      addItems: (items) => {
+      addItems: async (items) => {
+        const { currentCompanyId } = get();
+        if (!currentCompanyId) {
+          throw new Error("No company ID set. Please log in first.");
+        }
+
         const newItems: InventoryItem[] = items.map((item) => ({
           ...item,
+          companyId: currentCompanyId,
           id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
           createdAt: Date.now(),
           updatedAt: Date.now(),
         }));
+
+        // Save all to Firestore
+        await Promise.all(
+          newItems.map((item) => setDoc(doc(firestore, "inventory", item.id), item))
+        );
+
+        // Update local state
         set((state) => ({ items: [...state.items, ...newItems] }));
       },
 
-      updateItem: (id, updates) => {
+      updateItem: async (id, updates) => {
+        const updateData = {
+          ...updates,
+          updatedAt: Date.now(),
+        };
+
+        // Update Firestore
+        await updateDoc(doc(firestore, "inventory", id), updateData);
+
+        // Update local state
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id
-              ? { ...item, ...updates, updatedAt: Date.now() }
-              : item
+            item.id === id ? { ...item, ...updateData } : item
           ),
         }));
       },
 
-      deleteItem: (id) => {
+      deleteItem: async (id) => {
+        // Delete from Firestore
+        await deleteDoc(doc(firestore, "inventory", id));
+
+        // Update local state
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
@@ -79,12 +155,22 @@ export const useInventoryStore = create<InventoryState>()(
         );
       },
 
-      toggleStarred: (id) => {
+      toggleStarred: async (id) => {
+        const item = get().items.find((i) => i.id === id);
+        if (!item) return;
+
+        const updateData = {
+          isStarred: !item.isStarred,
+          updatedAt: Date.now(),
+        };
+
+        // Update Firestore
+        await updateDoc(doc(firestore, "inventory", id), updateData);
+
+        // Update local state
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id
-              ? { ...item, isStarred: !item.isStarred, updatedAt: Date.now() }
-              : item
+            item.id === id ? { ...item, ...updateData } : item
           ),
         }));
       },
@@ -115,11 +201,24 @@ export const useInventoryStore = create<InventoryState>()(
         return Object.values(groupedByName).filter((group) => group.length > 1);
       },
 
-      mergeDuplicates: (itemsToMerge, keepItem) => {
+      mergeDuplicates: async (itemsToMerge, keepItem) => {
         // Sum up quantities from all items being merged
         const totalQuantity = itemsToMerge.reduce((sum, item) => sum + item.quantity, 0);
 
-        // Update the kept item with the total quantity
+        // Delete merged items from Firestore
+        await Promise.all(
+          itemsToMerge
+            .filter((item) => item.id !== keepItem.id)
+            .map((item) => deleteDoc(doc(firestore, "inventory", item.id)))
+        );
+
+        // Update the kept item with the total quantity in Firestore
+        await updateDoc(doc(firestore, "inventory", keepItem.id), {
+          quantity: totalQuantity,
+          updatedAt: Date.now(),
+        });
+
+        // Update local state
         set((state) => ({
           items: state.items
             .filter((item) => !itemsToMerge.find((m) => m.id === item.id) || item.id === keepItem.id)
@@ -131,7 +230,7 @@ export const useInventoryStore = create<InventoryState>()(
         }));
       },
 
-      autoMergeAllDuplicates: () => {
+      autoMergeAllDuplicates: async () => {
         const duplicateGroups = get().findDuplicates();
         let mergedCount = 0;
         let removedCount = 0;
@@ -159,7 +258,22 @@ export const useInventoryStore = create<InventoryState>()(
           });
         });
 
-        // Update state: remove duplicates and set all quantities to 0
+        // Delete removed items from Firestore
+        await Promise.all(
+          Array.from(itemsToRemove).map((id) => deleteDoc(doc(firestore, "inventory", id)))
+        );
+
+        // Update all remaining items to have quantity 0 in Firestore
+        await Promise.all(
+          Array.from(itemsToKeep).map((id) =>
+            updateDoc(doc(firestore, "inventory", id), {
+              quantity: 0,
+              updatedAt: Date.now(),
+            })
+          )
+        );
+
+        // Update local state: remove duplicates and set all quantities to 0
         set((state) => ({
           items: state.items
             .filter((item) => !itemsToRemove.has(item.id))
@@ -173,7 +287,19 @@ export const useInventoryStore = create<InventoryState>()(
         return { merged: mergedCount, removed: removedCount };
       },
 
-      bulkUpdateCategories: (updates) => {
+      bulkUpdateCategories: async (updates) => {
+        // Update all items in Firestore
+        await Promise.all(
+          updates.map((update) =>
+            updateDoc(doc(firestore, "inventory", update.id), {
+              category: update.category,
+              subcategory: update.subcategory,
+              updatedAt: Date.now(),
+            })
+          )
+        );
+
+        // Update local state
         const updateMap = new Map(updates.map((u) => [u.id, { category: u.category, subcategory: u.subcategory }]));
         set((state) => ({
           items: state.items.map((item) => {
@@ -191,7 +317,14 @@ export const useInventoryStore = create<InventoryState>()(
         }));
       },
 
-      assignToProject: (itemId, projectId) => {
+      assignToProject: async (itemId, projectId) => {
+        // Update Firestore
+        await updateDoc(doc(firestore, "inventory", itemId), {
+          assignedProjectId: projectId,
+          updatedAt: Date.now(),
+        });
+
+        // Update local state
         set((state) => ({
           items: state.items.map((item) =>
             item.id === itemId
@@ -205,7 +338,14 @@ export const useInventoryStore = create<InventoryState>()(
         return get().items.filter((item) => item.assignedProjectId === projectId);
       },
 
-      unassignFromProject: (itemId) => {
+      unassignFromProject: async (itemId) => {
+        // Update Firestore
+        await updateDoc(doc(firestore, "inventory", itemId), {
+          assignedProjectId: undefined,
+          updatedAt: Date.now(),
+        });
+
+        // Update local state
         set((state) => ({
           items: state.items.map((item) =>
             item.id === itemId

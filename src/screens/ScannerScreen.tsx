@@ -351,7 +351,16 @@ export default function ScannerScreen({ navigation }: any) {
           We need camera access to scan barcodes
         </Text>
         <Pressable
-          onPress={requestPermission}
+          onPress={async () => {
+            const result = await requestPermission();
+            if (!result.granted) {
+              Alert.alert(
+                "Permission Denied",
+                "Please enable camera access in your device settings to use the scanner.",
+                [{ text: "OK" }]
+              );
+            }
+          }}
           className="mt-6 bg-indigo-600 rounded-xl px-6 py-3"
         >
           <Text className="text-white font-semibold text-base">Grant Permission</Text>

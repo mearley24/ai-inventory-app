@@ -1,5 +1,6 @@
 export interface InventoryItem {
   id: string;
+  companyId: string; // For multi-company sync
   name: string;
   barcode?: string;
   quantity: number;

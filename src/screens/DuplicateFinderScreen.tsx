@@ -32,8 +32,8 @@ export default function DuplicateFinderScreen({ navigation }: any) {
         {
           text: "Merge All",
           style: "destructive",
-          onPress: () => {
-            const result = autoMergeAllDuplicates();
+          onPress: async () => {
+            const result = await autoMergeAllDuplicates();
             Alert.alert(
               "Success!",
               `✅ Merged ${result.merged} groups\n✅ Removed ${result.removed} duplicate items\n✅ All quantities set to 0`,
@@ -45,7 +45,7 @@ export default function DuplicateFinderScreen({ navigation }: any) {
     );
   };
 
-  const handleMerge = (groupIndex: number, group: InventoryItem[]) => {
+  const handleMerge = async (groupIndex: number, group: InventoryItem[]) => {
     const keepItemId = selectedGroups[groupIndex];
 
     if (!keepItemId) {
@@ -66,8 +66,8 @@ export default function DuplicateFinderScreen({ navigation }: any) {
         {
           text: "Merge",
           style: "destructive",
-          onPress: () => {
-            mergeDuplicates(group, keepItem);
+          onPress: async () => {
+            await mergeDuplicates(group, keepItem);
             // Refresh the list
             const newGroups = findDuplicates();
             setDuplicateGroups(newGroups);

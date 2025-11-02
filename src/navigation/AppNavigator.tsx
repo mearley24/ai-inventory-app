@@ -14,25 +14,7 @@ import EditItemScreen from "../screens/EditItemScreen";
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function InventoryStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="InventoryList" component={InventoryScreen} />
-      <Stack.Screen
-        name="AddItem"
-        component={AddItemScreen}
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="EditItem"
-        component={EditItemScreen}
-        options={{ presentation: "modal" }}
-      />
-    </Stack.Navigator>
-  );
-}
-
-export default function AppNavigator() {
+function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -95,7 +77,7 @@ export default function AppNavigator() {
     >
       <Tab.Screen
         name="Inventory"
-        component={InventoryStack}
+        component={InventoryScreen}
         options={{ tabBarLabel: "Inventory" }}
       />
       <Tab.Screen
@@ -109,5 +91,23 @@ export default function AppNavigator() {
         options={{ tabBarLabel: "Time" }}
       />
     </Tab.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen
+        name="AddItem"
+        component={AddItemScreen}
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="EditItem"
+        component={EditItemScreen}
+        options={{ presentation: "modal" }}
+      />
+    </Stack.Navigator>
   );
 }

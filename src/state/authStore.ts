@@ -33,6 +33,7 @@ interface AuthState {
   // Actions
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string, companyName: string) => Promise<void>;
+  joinCompany: (email: string, password: string, displayName: string, companyId: string) => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
   setCompany: (company: Company | null) => void;
@@ -154,6 +155,42 @@ export const useAuthStore = create<AuthState>()(
 
           await setDoc(doc(firestore, "users", firebaseUser.uid), user);
 
+          set({ user, company, isAuthenticated: true, loading: false });
+        } catch (error: any) {
+          set({ error: error.message, loading: false });
+          throw error;
+        }
+      },
+
+      joinCompany: async (email: string, password: string, displayName: string, companyId: string) => {
+        try {
+          set({ loading: true, error: null });
+
+          // Verify the company exists
+          const companyDoc = await getDoc(doc(firestore, "companies", companyId));
+          if (!companyDoc.exists()) {
+            throw new Error("Company not found. Please check the Company ID.");
+          }
+
+          // Create Firebase auth user
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const firebaseUser = userCredential.user;
+
+          // Create user profile with the existing company
+          const user: User = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || email,
+            displayName,
+            companyId,
+            role: "field_worker",
+            teams: [],
+            createdAt: Date.now(),
+            lastActive: Date.now(),
+          };
+
+          await setDoc(doc(firestore, "users", firebaseUser.uid), user);
+
+          const company = companyDoc.data() as Company;
           set({ user, company, isAuthenticated: true, loading: false });
         } catch (error: any) {
           set({ error: error.message, loading: false });

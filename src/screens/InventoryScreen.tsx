@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Text, FlatList, ScrollView, Pressable, TextInput, Alert } from "react-native";
+import { View, Text, FlatList, ScrollView, Pressable, TextInput, Alert, Clipboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
 import { useTimeTrackerStore } from "../state/timeTrackerStore";
+import { useAuthStore } from "../state/authStore";
 import { InventoryItem } from "../types/inventory";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -18,6 +19,26 @@ export default function InventoryScreen({ navigation }: any) {
   const getLowStockItems = useInventoryStore((s) => s.getLowStockItems);
   const getStarredLowStockItems = useInventoryStore((s) => s.getStarredLowStockItems);
   const projects = useTimeTrackerStore((s) => s.projects);
+  const company = useAuthStore((s) => s.company);
+
+  const handleShowCompanyId = () => {
+    if (company) {
+      Alert.alert(
+        "Your Company ID",
+        `Share this ID with team members so they can join your company:\n\n${company.id}`,
+        [
+          {
+            text: "Copy ID",
+            onPress: () => {
+              Clipboard.setString(company.id);
+              Alert.alert("Copied!", "Company ID copied to clipboard");
+            },
+          },
+          { text: "Close" },
+        ]
+      );
+    }
+  };
 
   // Memoize expensive computations
   const categories = React.useMemo(() =>
@@ -191,7 +212,15 @@ export default function InventoryScreen({ navigation }: any) {
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
         <View className="px-6 pt-4 pb-2">
-          <Text className="text-3xl font-bold text-neutral-900 mb-3">Inventory</Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
+            <Pressable
+              onPress={handleShowCompanyId}
+              className="bg-indigo-100 rounded-full w-10 h-10 items-center justify-center"
+            >
+              <Ionicons name="people" size={20} color="#4F46E5" />
+            </Pressable>
+          </View>
 
           {/* Stats Row */}
           <View className="flex-row items-center justify-between mb-3">

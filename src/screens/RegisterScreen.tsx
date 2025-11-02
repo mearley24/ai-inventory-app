@@ -12,14 +12,39 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [companyName, setCompanyName] = React.useState("");
+  const [companyId, setCompanyId] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [isJoiningCompany, setIsJoiningCompany] = React.useState(false);
 
   const signUp = useAuthStore((s) => s.signUp);
+  const joinCompany = useAuthStore((s) => s.joinCompany);
+  const company = useAuthStore((s) => s.company);
+
+  // Show company ID if user already has a company
+  React.useEffect(() => {
+    if (company) {
+      Alert.alert(
+        "Your Company ID",
+        `Share this ID with team members:\n\n${company.id}\n\nThey can use it to join your company.`,
+        [{ text: "OK" }]
+      );
+    }
+  }, [company]);
 
   const handleRegister = async () => {
-    if (!displayName.trim() || !email.trim() || !password.trim() || !companyName.trim()) {
-      Alert.alert("Error", "Please fill in all fields");
+    if (!displayName.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill in all required fields");
+      return;
+    }
+
+    if (isJoiningCompany && !companyId.trim()) {
+      Alert.alert("Error", "Please enter a Company ID to join");
+      return;
+    }
+
+    if (!isJoiningCompany && !companyName.trim()) {
+      Alert.alert("Error", "Please enter a Company Name");
       return;
     }
 
@@ -35,7 +60,11 @@ export default function RegisterScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      await signUp(email.trim(), password, displayName.trim(), companyName.trim());
+      if (isJoiningCompany) {
+        await joinCompany(email.trim(), password, displayName.trim(), companyId.trim());
+      } else {
+        await signUp(email.trim(), password, displayName.trim(), companyName.trim());
+      }
       // Navigation will be handled by App.tsx based on auth state
     } catch (error: any) {
       Alert.alert("Registration Failed", error.message || "Unable to create account");
@@ -72,6 +101,28 @@ export default function RegisterScreen({ navigation }: any) {
 
           {/* Form */}
           <View className="flex-1 px-6">
+            {/* Toggle between Create/Join */}
+            <Animated.View entering={FadeInDown.delay(150).springify()} className="mb-6">
+              <View className="flex-row bg-white rounded-xl p-1 shadow-sm">
+                <Pressable
+                  onPress={() => setIsJoiningCompany(false)}
+                  className={`flex-1 py-3 rounded-lg ${!isJoiningCompany ? "bg-indigo-600" : ""}`}
+                >
+                  <Text className={`text-center font-semibold ${!isJoiningCompany ? "text-white" : "text-neutral-600"}`}>
+                    Create Company
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setIsJoiningCompany(true)}
+                  className={`flex-1 py-3 rounded-lg ${isJoiningCompany ? "bg-indigo-600" : ""}`}
+                >
+                  <Text className={`text-center font-semibold ${isJoiningCompany ? "text-white" : "text-neutral-600"}`}>
+                    Join Company
+                  </Text>
+                </Pressable>
+              </View>
+            </Animated.View>
+
             <Animated.View entering={FadeInDown.delay(200).springify()} className="mb-4">
               <Text className="text-sm font-semibold text-neutral-700 mb-2">Your Name</Text>
               <View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
@@ -87,20 +138,42 @@ export default function RegisterScreen({ navigation }: any) {
               </View>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(250).springify()} className="mb-4">
-              <Text className="text-sm font-semibold text-neutral-700 mb-2">Company Name</Text>
-              <View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
-                <Ionicons name="business-outline" size={20} color="#9CA3AF" />
-                <TextInput
-                  className="flex-1 ml-3 text-base text-neutral-900"
-                  placeholder="Your Company"
-                  placeholderTextColor="#9CA3AF"
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                  autoCapitalize="words"
-                />
-              </View>
-            </Animated.View>
+            {/* Show Company Name field only when creating, Company ID when joining */}
+            {!isJoiningCompany ? (
+              <Animated.View entering={FadeInDown.delay(250).springify()} className="mb-4">
+                <Text className="text-sm font-semibold text-neutral-700 mb-2">Company Name</Text>
+                <View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
+                  <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+                  <TextInput
+                    className="flex-1 ml-3 text-base text-neutral-900"
+                    placeholder="Your Company"
+                    placeholderTextColor="#9CA3AF"
+                    value={companyName}
+                    onChangeText={setCompanyName}
+                    autoCapitalize="words"
+                  />
+                </View>
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeInDown.delay(250).springify()} className="mb-4">
+                <Text className="text-sm font-semibold text-neutral-700 mb-2">Company ID</Text>
+                <View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
+                  <Ionicons name="key-outline" size={20} color="#9CA3AF" />
+                  <TextInput
+                    className="flex-1 ml-3 text-base text-neutral-900"
+                    placeholder="Enter company ID to join"
+                    placeholderTextColor="#9CA3AF"
+                    value={companyId}
+                    onChangeText={setCompanyId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                <Text className="text-xs text-neutral-500 mt-2">
+                  Get the Company ID from your team administrator
+                </Text>
+              </Animated.View>
+            )}
 
             <Animated.View entering={FadeInDown.delay(300).springify()} className="mb-4">
               <Text className="text-sm font-semibold text-neutral-700 mb-2">Email</Text>

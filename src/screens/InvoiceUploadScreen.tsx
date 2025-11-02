@@ -26,6 +26,7 @@ type Props = {
 
 export default function InvoiceUploadScreen({ navigation }: Props) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState("");
   const [parsedInvoice, setParsedInvoice] = useState<ParsedInvoice | null>(
@@ -53,6 +54,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setSelectedDocument(null);
       setParsedInvoice(null);
       setSelectedItems(new Set());
     }
@@ -67,14 +69,40 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setSelectedDocument(null);
       setParsedInvoice(null);
       setSelectedItems(new Set());
     }
   };
 
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "image/*"],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        setSelectedDocument({
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || "application/pdf",
+        });
+        setSelectedImage(null);
+        setParsedInvoice(null);
+        setSelectedItems(new Set());
+      }
+    } catch (error) {
+      console.error("Document picker error:", error);
+      Alert.alert("Error", "Failed to pick document. Please try again.");
+    }
+  };
+
   const handleParseInvoice = async () => {
-    if (!selectedImage) {
-      Alert.alert("No Image", "Please select an invoice image first");
+    const sourceUri = selectedImage || selectedDocument?.uri;
+    if (!sourceUri) {
+      Alert.alert("No File Selected", "Please select an invoice image or document first");
       return;
     }
 
@@ -82,7 +110,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
     setProcessingMessage("Reading invoice with AI...");
 
     try {
-      const parsed = await parseInvoiceImage(selectedImage);
+      const parsed = await parseInvoiceImage(sourceUri);
       setParsedInvoice(parsed);
 
       // Select all items by default
@@ -179,10 +207,10 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
           contentContainerStyle={{ padding: 24, gap: 20 }}
         >
           {/* Upload Options */}
-          {!selectedImage && (
+          {!selectedImage && !selectedDocument && (
             <View className="gap-4">
               <Text className="text-white text-base mb-2">
-                Select an invoice image to parse
+                Select an invoice to parse
               </Text>
 
               <Pressable
@@ -208,6 +236,19 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
                 </Text>
                 <Text className="text-white/80 text-sm mt-1">
                   Select existing invoice image
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handlePickDocument}
+                className="bg-white/20 rounded-2xl p-6 items-center"
+              >
+                <Ionicons name="document-text" size={48} color="white" />
+                <Text className="text-white text-lg font-semibold mt-4">
+                  Upload Document
+                </Text>
+                <Text className="text-white/80 text-sm mt-1">
+                  Select PDF or image file
                 </Text>
               </Pressable>
             </View>
@@ -252,6 +293,55 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
               <Pressable
                 onPress={() => {
                   setSelectedImage(null);
+                  setSelectedDocument(null);
+                  setParsedInvoice(null);
+                }}
+                className="bg-white/20 rounded-xl p-3 items-center"
+              >
+                <Text className="text-white font-medium">Choose Different</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Selected Document Preview */}
+          {selectedDocument && !parsedInvoice && (
+            <View className="gap-4">
+              <View className="bg-white/20 rounded-2xl p-6 items-center">
+                <Ionicons name="document-text" size={64} color="white" />
+                <Text className="text-white text-lg font-semibold mt-4">
+                  {selectedDocument.name}
+                </Text>
+                <Text className="text-white/80 text-sm mt-1">
+                  {selectedDocument.type === "application/pdf" ? "PDF Document" : "Image File"}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={handleParseInvoice}
+                disabled={isProcessing}
+                className="bg-white rounded-xl p-4 items-center"
+              >
+                {isProcessing ? (
+                  <View className="flex-row items-center gap-2">
+                    <ActivityIndicator color="#8b5cf6" />
+                    <Text className="text-purple-600 font-semibold">
+                      {processingMessage}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Ionicons name="scan" size={24} color="#8b5cf6" />
+                    <Text className="text-purple-600 font-semibold mt-2">
+                      Parse Invoice with AI
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setSelectedImage(null);
+                  setSelectedDocument(null);
                   setParsedInvoice(null);
                 }}
                 className="bg-white/20 rounded-xl p-3 items-center"
@@ -375,6 +465,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
               <Pressable
                 onPress={() => {
                   setSelectedImage(null);
+                  setSelectedDocument(null);
                   setParsedInvoice(null);
                   setSelectedItems(new Set());
                 }}

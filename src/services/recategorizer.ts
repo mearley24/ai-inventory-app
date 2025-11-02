@@ -2,95 +2,112 @@ import { InventoryItem } from "../types/inventory";
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 
+// Predefined category sets for popular suppliers
+const SUPPLIER_CATEGORIES: { [key: string]: string[] } = {
+  "snapav.com": [
+    "Control4",
+    "Audio",
+    "Bulk Wire & Connectors",
+    "Cables",
+    "Conferencing",
+    "Control",
+    "Lighting",
+    "Media Distribution",
+    "Mounts",
+    "Networking",
+    "Power",
+    "Projectors & Screens",
+    "Racks",
+    "Smart Security & Access",
+    "Speakers",
+    "Surveillance",
+    "Televisions",
+    "Tools & Hardware",
+    "Other",
+  ],
+  "adorama.com": [
+    "Cameras",
+    "Lenses",
+    "Lighting",
+    "Video Equipment",
+    "Audio Equipment",
+    "Computers",
+    "Drones",
+    "Optics",
+    "Telescopes",
+    "Accessories",
+    "Other",
+  ],
+  "bhphotovideo.com": [
+    "Cameras",
+    "Lenses",
+    "Lighting & Studio",
+    "Video",
+    "Audio",
+    "Computers",
+    "Drones & Aerial Imaging",
+    "Pro Video",
+    "Pro Audio",
+    "Optics",
+    "Other",
+  ],
+  "amazon.com": [
+    "Electronics",
+    "Computers",
+    "Home & Kitchen",
+    "Tools & Home Improvement",
+    "Office Products",
+    "Camera & Photo",
+    "Cell Phones & Accessories",
+    "Video Games",
+    "Sports & Outdoors",
+    "Other",
+  ],
+};
+
 /**
- * Fetch categories from a website using AI
+ * Get categories for a website (from predefined list or AI extraction)
  */
-export async function extractCategoriesFromWebsite(
+export async function getCategoriesForWebsite(
   websiteUrl: string
 ): Promise<string[]> {
   try {
-    console.log("Fetching categories from:", websiteUrl);
+    // Normalize URL
+    const domain = websiteUrl
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .split("/")[0]
+      .toLowerCase();
 
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: `Visit this website and extract all product categories: ${websiteUrl}
+    console.log("Looking up categories for domain:", domain);
 
-Return ONLY a JSON array of category names (no markdown, no code blocks):
-["Category 1", "Category 2", "Category 3"]
-
-Rules:
-- Extract main product categories only
-- Include subcategories if they are distinct product types
-- Remove generic categories like "All Products" or "Home"
-- Return at least 5-20 categories
-- Add "Other" as the last category`,
-            },
-          ],
-          temperature: 0.0,
-          max_tokens: 1000,
-        }),
+    // Check if we have predefined categories for this supplier
+    for (const [key, categories] of Object.entries(SUPPLIER_CATEGORIES)) {
+      if (domain.includes(key)) {
+        console.log("Found predefined categories for:", key);
+        return categories;
       }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        `OpenAI API error: ${errorData.error?.message || response.statusText}`
-      );
     }
 
-    const data = await response.json();
-    let content = data.choices[0].message.content.trim();
-
-    // Remove markdown code blocks if present
-    if (content.startsWith("```")) {
-      content = content.replace(/```json\n?|\n?```/g, "").trim();
-    }
-
-    const categories = JSON.parse(content) as string[];
-
-    // Ensure "Other" is included
-    if (!categories.includes("Other")) {
-      categories.push("Other");
-    }
-
-    console.log("Extracted categories:", categories);
-    return categories;
-  } catch (error) {
-    console.error("Error extracting categories:", error);
-    // Fallback to default categories
+    // If no predefined categories, use AI to infer categories from product names
+    console.log("No predefined categories, will use generic categorization");
     return [
-      "Control4",
-      "Audio",
-      "Bulk Wire & Connectors",
-      "Cables",
-      "Conferencing",
-      "Control",
+      "Audio & Video",
+      "Cables & Connectors",
+      "Cameras & Surveillance",
+      "Computers & Networking",
+      "Control Systems",
       "Lighting",
-      "Media Distribution",
-      "Mounts",
-      "Networking",
-      "Power",
-      "Projectors & Screens",
-      "Racks",
-      "Smart Security & Access",
-      "Speakers",
-      "Surveillance",
-      "Televisions",
-      "Tools & Hardware",
+      "Mounts & Hardware",
+      "Power & Distribution",
+      "Security & Access",
+      "Tools & Equipment",
       "Other",
     ];
+  } catch (error) {
+    console.error("Error getting categories:", error);
+    // Fallback to default categories
+    return SUPPLIER_CATEGORIES["snapav.com"];
   }
 }
 

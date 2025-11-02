@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useInventoryStore } from "../state/inventoryStore";
-import { recategorizeItems, extractCategoriesFromWebsite } from "../services/recategorizer";
+import { recategorizeItems, getCategoriesForWebsite } from "../services/recategorizer";
 import { safeGoBack } from "../utils/navigation";
 
 type Props = {
@@ -57,7 +57,7 @@ export default function RecategorizeScreen({ navigation }: Props) {
 
             try {
               // Step 1: Extract categories from website
-              const extractedCategories = await extractCategoriesFromWebsite(websiteUrl);
+              const extractedCategories = await getCategoriesForWebsite(websiteUrl);
               setCategories(extractedCategories);
               setProgress(`Found ${extractedCategories.length} categories`);
 

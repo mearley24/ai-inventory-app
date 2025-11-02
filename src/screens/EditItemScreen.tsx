@@ -68,7 +68,21 @@ export default function EditItemScreen({ navigation, route }: any) {
       isStarred,
     });
 
-    navigation.goBack();
+    // Force navigation back
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Main');
+    }
+  };
+
+  const handleCancel = () => {
+    // Force close and go back to main screen
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Main');
+    }
   };
 
   return (
@@ -79,7 +93,7 @@ export default function EditItemScreen({ navigation, route }: any) {
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable onPress={handleCancel}>
             <Ionicons name="arrow-back" size={28} color="#1F2937" />
           </Pressable>
           <Text className="text-xl font-bold text-neutral-900">Edit Item</Text>

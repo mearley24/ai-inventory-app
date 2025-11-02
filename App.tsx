@@ -3,6 +3,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
+import React from "react";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -26,15 +27,18 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 */
 
 export default function App() {
+  // Force navigation to reset on mount - don't persist state
+  const [navigationKey, setNavigationKey] = React.useState(0);
+
+  React.useEffect(() => {
+    // Reset navigation on mount
+    setNavigationKey(Date.now());
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer
-          onStateChange={(state) => {
-            // Don't persist navigation state - always start fresh
-            console.log('Navigation state changed');
-          }}
-        >
+        <NavigationContainer key={navigationKey}>
           <AppNavigator />
           <StatusBar style="auto" />
         </NavigationContainer>

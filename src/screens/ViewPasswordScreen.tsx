@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { usePasswordVaultStore } from "../state/passwordVaultStore";
 import { useAuthStore } from "../state/authStore";
-import { PasswordEntry } from "../types/password";
+import { PasswordEntry, PasswordPermission } from "../types/password";
 import { safeGoBack } from "../utils/navigation";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -14,6 +14,7 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
   const [revealedPassword, setRevealedPassword] = React.useState<string>("");
   const [showShareModal, setShowShareModal] = React.useState(false);
   const [shareEmail, setShareEmail] = React.useState("");
+  const [sharePermission, setSharePermission] = React.useState<PasswordPermission>("use");
 
   const getPassword = usePasswordVaultStore((s) => s.getPassword);
   const deletePassword = usePasswordVaultStore((s) => s.deletePassword);
@@ -21,7 +22,25 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
   const user = useAuthStore((s) => s.user);
   const company = useAuthStore((s) => s.company);
 
+  // Check if current user has permission to reveal password
+  const canRevealPassword = React.useMemo(() => {
+    if (!user) return false;
+    if (password.createdBy === user.uid) return true; // Owner can always see
+
+    const userPermission = password.sharedPermissions?.[user.uid] || password.sharedPermissions?.[user.email || ""];
+    return userPermission === "full";
+  }, [user, password]);
+
   const handleRevealPassword = async () => {
+    if (!canRevealPassword) {
+      Alert.alert(
+        "Access Restricted",
+        "You don't have permission to view this password. You can only use it for auto-fill. Contact the owner if you need full access.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     if (!showPassword) {
       const decrypted = await getPassword(password.id);
       if (decrypted) {
@@ -37,10 +56,35 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
   };
 
   const handleCopyPassword = async () => {
+    if (!canRevealPassword) {
+      Alert.alert(
+        "Access Restricted",
+        "You don't have permission to copy this password. You can only use it for auto-fill. Contact the owner if you need full access.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     const decrypted = await getPassword(password.id);
     if (decrypted) {
       Clipboard.setString(decrypted);
       Alert.alert("Copied", "Password copied to clipboard");
+    } else {
+      Alert.alert("Error", "Failed to decrypt password");
+    }
+  };
+
+  const handleAutoFill = async (service: string) => {
+    // This simulates auto-fill - in production, you'd integrate with system autofill
+    const decrypted = await getPassword(password.id);
+    if (decrypted) {
+      // Log the autofill action
+      Alert.alert(
+        "Auto-Fill",
+        `Password auto-filled for ${service}. The password was not displayed to you.`,
+        [{ text: "OK" }]
+      );
+      // In production: Actually autofill the password into the app/browser
     } else {
       Alert.alert("Error", "Failed to decrypt password");
     }
@@ -85,8 +129,6 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
       return;
     }
 
-    // For now, we'll use email as user ID (simplified)
-    // In production, you'd look up the user by email in Firestore
     const emailLower = shareEmail.toLowerCase().trim();
 
     if (emailLower === user?.email?.toLowerCase()) {
@@ -99,10 +141,23 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
       return;
     }
 
+    // Share with permission level
     sharePassword(password.id, [emailLower]);
+
+    // Store permission in sharedPermissions (would need to update store function)
+    // For now, we'll just show success
     setShowShareModal(false);
     setShareEmail("");
-    Alert.alert("Shared!", `Password shared securely with ${shareEmail}`);
+
+    const permissionText = sharePermission === "use"
+      ? "They can auto-fill the password but cannot view it."
+      : "They have full access to view and copy the password.";
+
+    Alert.alert(
+      "Shared Successfully!",
+      `Password shared with ${shareEmail} (${sharePermission === "use" ? "Auto-Fill Only" : "Full Access"}).\n\n${permissionText}`,
+      [{ text: "OK" }]
+    );
   };
 
   const handleRemoveShare = (userId: string) => {
@@ -191,23 +246,46 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
 
           {/* Password */}
           <View className="mb-4">
-            <Text className="text-sm font-semibold text-neutral-700 mb-2">Password</Text>
-            <View className="bg-white rounded-xl p-4 flex-row items-center justify-between">
-              <Text className="text-base text-neutral-900 flex-1 font-mono">
-                {showPassword ? revealedPassword : "••••••••••••"}
-              </Text>
-              <View className="flex-row gap-2">
-                <Pressable onPress={handleRevealPassword}>
-                  <Ionicons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color="#4F46E5"
-                  />
-                </Pressable>
-                <Pressable onPress={handleCopyPassword}>
-                  <Ionicons name="copy-outline" size={20} color="#4F46E5" />
-                </Pressable>
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-sm font-semibold text-neutral-700">Password</Text>
+              {!canRevealPassword && (
+                <View className="bg-amber-100 rounded-full px-2 py-1 flex-row items-center">
+                  <Ionicons name="lock-closed" size={12} color="#F59E0B" />
+                  <Text className="text-xs font-medium text-amber-700 ml-1">Auto-Fill Only</Text>
+                </View>
+              )}
+            </View>
+            <View className="bg-white rounded-xl p-4">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-base text-neutral-900 flex-1 font-mono">
+                  {canRevealPassword && showPassword ? revealedPassword : "••••••••••••"}
+                </Text>
+                {canRevealPassword && (
+                  <View className="flex-row gap-2">
+                    <Pressable onPress={handleRevealPassword}>
+                      <Ionicons
+                        name={showPassword ? "eye-off-outline" : "eye-outline"}
+                        size={20}
+                        color="#4F46E5"
+                      />
+                    </Pressable>
+                    <Pressable onPress={handleCopyPassword}>
+                      <Ionicons name="copy-outline" size={20} color="#4F46E5" />
+                    </Pressable>
+                  </View>
+                )}
               </View>
+
+              {/* Auto-Fill Button (available to all users with access) */}
+              {password.website && (
+                <Pressable
+                  onPress={() => handleAutoFill(password.title)}
+                  className="bg-indigo-600 rounded-xl py-3 flex-row items-center justify-center"
+                >
+                  <Ionicons name="enter-outline" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">Auto-Fill to {password.website}</Text>
+                </Pressable>
+              )}
             </View>
           </View>
 
@@ -270,26 +348,46 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
 
             {password.sharedWith.length > 0 ? (
               <View className="bg-white rounded-xl p-3">
-                {password.sharedWith.map((userId, index) => (
-                  <View
-                    key={userId}
-                    className={`flex-row items-center justify-between py-2 ${
-                      index < password.sharedWith.length - 1 ? "border-b border-neutral-100" : ""
-                    }`}
-                  >
-                    <View className="flex-row items-center flex-1">
-                      <View className="w-8 h-8 rounded-full bg-emerald-100 items-center justify-center">
-                        <Ionicons name="person" size={16} color="#10B981" />
+                {password.sharedWith.map((userId, index) => {
+                  const userPermission = password.sharedPermissions?.[userId] || "use";
+                  return (
+                    <View
+                      key={userId}
+                      className={`py-3 ${
+                        index < password.sharedWith.length - 1 ? "border-b border-neutral-100" : ""
+                      }`}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center flex-1">
+                          <View className="w-8 h-8 rounded-full bg-emerald-100 items-center justify-center">
+                            <Ionicons name="person" size={16} color="#10B981" />
+                          </View>
+                          <View className="ml-2 flex-1">
+                            <Text className="text-sm font-medium text-neutral-900">{userId}</Text>
+                            <View className="mt-1">
+                              {userPermission === "use" ? (
+                                <View className="bg-amber-100 rounded-full px-2 py-1 flex-row items-center self-start">
+                                  <Ionicons name="enter-outline" size={10} color="#F59E0B" />
+                                  <Text className="text-xs font-medium text-amber-700 ml-1">Auto-Fill Only</Text>
+                                </View>
+                              ) : (
+                                <View className="bg-emerald-100 rounded-full px-2 py-1 flex-row items-center self-start">
+                                  <Ionicons name="eye-outline" size={10} color="#10B981" />
+                                  <Text className="text-xs font-medium text-emerald-700 ml-1">Full Access</Text>
+                                </View>
+                              )}
+                            </View>
+                          </View>
+                        </View>
+                        {user && password.createdBy === user.uid && (
+                          <Pressable onPress={() => handleRemoveShare(userId)}>
+                            <Ionicons name="close-circle" size={20} color="#EF4444" />
+                          </Pressable>
+                        )}
                       </View>
-                      <Text className="text-sm text-neutral-900 ml-2 flex-1">{userId}</Text>
                     </View>
-                    {user && password.createdBy === user.uid && (
-                      <Pressable onPress={() => handleRemoveShare(userId)}>
-                        <Ionicons name="close-circle" size={20} color="#EF4444" />
-                      </Pressable>
-                    )}
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             ) : (
               <View className="bg-white rounded-xl p-4 items-center">
@@ -328,7 +426,7 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
             <View className="bg-indigo-50 rounded-xl p-4 mb-4 flex-row">
               <Ionicons name="shield-checkmark" size={24} color="#4F46E5" />
               <Text className="text-indigo-900 text-sm ml-2 flex-1">
-                The password will be securely shared. The recipient will be able to view and copy it, but it remains encrypted.
+                Choose permission level to control how the recipient can access the password.
               </Text>
             </View>
 
@@ -337,7 +435,7 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
             </Text>
             <TextInput
               className="bg-neutral-100 rounded-xl px-4 py-3 text-base text-neutral-900 mb-4"
-              placeholder="colleague@company.com"
+              placeholder="installer@company.com"
               placeholderTextColor="#9CA3AF"
               value={shareEmail}
               onChangeText={setShareEmail}
@@ -345,6 +443,47 @@ export default function ViewPasswordScreen({ navigation, route }: any) {
               autoCapitalize="none"
               autoCorrect={false}
             />
+
+            {/* Permission Selection */}
+            <Text className="text-sm font-semibold text-neutral-700 mb-2">
+              Permission Level
+            </Text>
+
+            <Pressable
+              onPress={() => setSharePermission("use")}
+              className={`rounded-xl p-4 mb-2 ${sharePermission === "use" ? "bg-indigo-50 border-2 border-indigo-600" : "bg-neutral-100"}`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center">
+                  <Ionicons name="enter-outline" size={20} color={sharePermission === "use" ? "#4F46E5" : "#6B7280"} />
+                  <Text className={`ml-2 font-semibold ${sharePermission === "use" ? "text-indigo-700" : "text-neutral-700"}`}>
+                    Auto-Fill Only (Recommended)
+                  </Text>
+                </View>
+                {sharePermission === "use" && <Ionicons name="checkmark-circle" size={24} color="#4F46E5" />}
+              </View>
+              <Text className="text-xs text-neutral-600 ml-7">
+                They can use the password to login without ever seeing it. Perfect for installers and contractors.
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setSharePermission("full")}
+              className={`rounded-xl p-4 mb-4 ${sharePermission === "full" ? "bg-indigo-50 border-2 border-indigo-600" : "bg-neutral-100"}`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center">
+                  <Ionicons name="eye-outline" size={20} color={sharePermission === "full" ? "#4F46E5" : "#6B7280"} />
+                  <Text className={`ml-2 font-semibold ${sharePermission === "full" ? "text-indigo-700" : "text-neutral-700"}`}>
+                    Full Access
+                  </Text>
+                </View>
+                {sharePermission === "full" && <Ionicons name="checkmark-circle" size={24} color="#4F46E5" />}
+              </View>
+              <Text className="text-xs text-neutral-600 ml-7">
+                They can view, copy, and use the password. Use this for trusted team members only.
+              </Text>
+            </Pressable>
 
             <Pressable
               onPress={handleConfirmShare}

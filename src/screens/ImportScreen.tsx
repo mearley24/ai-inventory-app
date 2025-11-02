@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
+import * as XLSX from "xlsx";
 import { useInventoryStore } from "../state/inventoryStore";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
@@ -12,6 +13,76 @@ export default function ImportScreen({ navigation }: any) {
   const [importResult, setImportResult] = React.useState<{ success: number; failed: number } | null>(null);
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
+
+  const parseExcelOrCSV = async (uri: string, mimeType?: string) => {
+    const isExcel = mimeType?.includes("spreadsheet") ||
+                    uri.endsWith(".xlsx") ||
+                    uri.endsWith(".xls");
+
+    if (isExcel) {
+      // Handle Excel files
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const workbook = XLSX.read(base64, { type: "base64" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as string[][];
+
+      return parseDataArray(jsonData);
+    } else {
+      // Handle CSV files
+      const content = await FileSystem.readAsStringAsync(uri);
+      return parseCSV(content);
+    }
+  };
+
+  const parseDataArray = (data: string[][]) => {
+    if (data.length === 0) return [];
+
+    const headers = data[0].map((h) => String(h).trim().toLowerCase());
+    const items = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const values = data[i];
+      if (!values || values.length < 2) continue;
+
+      const item: any = {
+        name: "",
+        quantity: 1,
+        category: "General",
+      };
+
+      headers.forEach((header, index) => {
+        const value = values[index];
+        if (!value) return;
+
+        const stringValue = String(value).trim();
+
+        if (header.includes("name") || header.includes("item") || header.includes("product") || header.includes("description")) {
+          if (!item.name) {
+            item.name = stringValue;
+          } else if (header.includes("description") || header.includes("desc")) {
+            item.description = stringValue;
+          }
+        } else if (header.includes("price") || header.includes("cost") || header.includes("retail")) {
+          item.price = parseFloat(String(value).replace(/[^0-9.]/g, "")) || 0;
+        } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock") || header.includes("count")) {
+          item.quantity = parseInt(String(value)) || 1;
+        } else if (header.includes("category") || header.includes("type") || header.includes("class")) {
+          item.category = stringValue;
+        } else if (header.includes("barcode") || header.includes("sku") || header.includes("upc") || header.includes("code")) {
+          item.barcode = stringValue;
+        }
+      });
+
+      if (item.name) {
+        items.push(item);
+      }
+    }
+
+    return items;
+  };
 
   const parseCSV = (csvText: string) => {
     const lines = csvText.split("\n").filter((line) => line.trim());
@@ -22,7 +93,7 @@ export default function ImportScreen({ navigation }: any) {
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim());
-      if (values.length < 2) continue; // Skip empty lines
+      if (values.length < 2) continue;
 
       const item: any = {
         name: "",
@@ -73,13 +144,12 @@ export default function ImportScreen({ navigation }: any) {
       }
 
       const file = result.assets[0];
-      const content = await FileSystem.readAsStringAsync(file.uri);
 
-      // Parse CSV
-      const parsedItems = parseCSV(content);
+      // Parse Excel or CSV
+      const parsedItems = await parseExcelOrCSV(file.uri, file.mimeType);
 
       if (parsedItems.length === 0) {
-        Alert.alert("No Items Found", "Could not find any valid items in the file. Make sure your CSV has columns like: Name, Price, Quantity, Category");
+        Alert.alert("No Items Found", "Could not find any valid items in the file. Make sure your file has columns like: Name, Price, Quantity, Category");
         setImporting(false);
         return;
       }
@@ -91,7 +161,7 @@ export default function ImportScreen({ navigation }: any) {
       setImporting(false);
     } catch (error) {
       console.error("Import error:", error);
-      Alert.alert("Import Failed", "There was an error importing your file. Please make sure it's a valid CSV file.");
+      Alert.alert("Import Failed", "There was an error importing your file. Please make sure it is a valid CSV or Excel file.");
       setImporting(false);
     }
   };
@@ -160,10 +230,10 @@ export default function ImportScreen({ navigation }: any) {
             >
               <Ionicons name="cloud-upload" size={48} color="white" />
               <Text className="text-white text-xl font-bold mt-3">
-                {importing ? "Importing..." : "Select CSV File"}
+                {importing ? "Importing..." : "Select File"}
               </Text>
               <Text className="text-white/80 text-sm mt-1">
-                Choose a CSV file to import items
+                CSV or Excel (.xls, .xlsx)
               </Text>
             </Pressable>
 
@@ -186,7 +256,7 @@ export default function ImportScreen({ navigation }: any) {
                 <View className="flex-row">
                   <Text className="text-indigo-600 font-bold mr-2">1.</Text>
                   <Text className="flex-1 text-neutral-700">
-                    Prepare your CSV file with columns: Name, Price, Quantity, Category
+                    Prepare your file (CSV or Excel) with columns: Name, Price, Quantity, Category
                   </Text>
                 </View>
 
@@ -200,7 +270,7 @@ export default function ImportScreen({ navigation }: any) {
                 <View className="flex-row">
                   <Text className="text-indigo-600 font-bold mr-2">3.</Text>
                   <Text className="flex-1 text-neutral-700">
-                    Tap &quot;Select CSV File&quot; and choose your file
+                    Tap &quot;Select File&quot; and choose your file
                   </Text>
                 </View>
 

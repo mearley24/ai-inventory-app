@@ -221,7 +221,16 @@ export default function InventoryScreen({ navigation }: any) {
               >
                 <Ionicons name="copy" size={14} color="#EA580C" />
                 <Text className="text-orange-700 font-semibold text-xs ml-1">
-                  Find Duplicates
+                  Duplicates
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate("Recategorize")}
+                className="bg-teal-100 rounded-full px-3 py-1 flex-row items-center"
+              >
+                <Ionicons name="pricetags" size={14} color="#14B8A6" />
+                <Text className="text-teal-700 font-semibold text-xs ml-1">
+                  Recategorize
                 </Text>
               </Pressable>
             </View>

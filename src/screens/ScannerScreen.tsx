@@ -39,13 +39,33 @@ export default function ScannerScreen({ navigation }: any) {
         setScannedData("");
       }, 500);
     } else {
-      // Check if barcode matches any SKU/model in descriptions or names
-      const matchingItems = items.filter(
-        (item) =>
-          item.barcode?.toLowerCase().includes(data.toLowerCase()) ||
-          item.name.toLowerCase().includes(data.toLowerCase()) ||
-          item.description?.toLowerCase().includes(data.toLowerCase())
-      );
+      // Check if scanned barcode matches any SKU/model numbers in existing items
+      // This handles cases where items were imported with model numbers but no barcode set yet
+      const scannedLower = data.toLowerCase().trim();
+      const matchingItems = items.filter((item) => {
+        // Check if the scanned barcode appears in the item's existing barcode field (partial match)
+        if (item.barcode?.toLowerCase().includes(scannedLower)) {
+          return true;
+        }
+
+        // Check if the scanned barcode appears in the item's name (could be model number)
+        if (item.name.toLowerCase().includes(scannedLower)) {
+          return true;
+        }
+
+        // Check if the scanned barcode appears in the description (could be SKU/part number)
+        if (item.description?.toLowerCase().includes(scannedLower)) {
+          return true;
+        }
+
+        // Also check reverse: if item's barcode (which might be a model number from D-Tools)
+        // partially matches the scanned barcode
+        if (item.barcode && scannedLower.includes(item.barcode.toLowerCase())) {
+          return true;
+        }
+
+        return false;
+      });
 
       if (matchingItems.length > 0) {
         // Found potential matches - let user choose
@@ -306,27 +326,42 @@ export default function ScannerScreen({ navigation }: any) {
                 renderItem={({ item }) => (
                   <Pressable
                     onPress={() => handleSelectItem(item)}
-                    className="bg-neutral-50 rounded-xl p-4 mb-3 flex-row items-center"
+                    className="bg-neutral-50 rounded-xl p-4 mb-3"
                   >
-                    <View className="w-12 h-12 rounded-full bg-indigo-100 items-center justify-center mr-4">
-                      <Ionicons name="cube" size={24} color="#4F46E5" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-lg font-semibold text-neutral-900">
-                        {item.name}
-                      </Text>
-                      <View className="flex-row items-center mt-1">
-                        <View className="bg-neutral-200 rounded-full px-2 py-1 mr-2">
-                          <Text className="text-xs font-medium text-neutral-700">
-                            {item.category}
+                    <View className="flex-row items-center">
+                      <View className="w-12 h-12 rounded-full bg-indigo-100 items-center justify-center mr-4">
+                        <Ionicons name="cube" size={24} color="#4F46E5" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-lg font-semibold text-neutral-900">
+                          {item.name}
+                        </Text>
+                        <View className="flex-row items-center mt-1">
+                          <View className="bg-neutral-200 rounded-full px-2 py-1 mr-2">
+                            <Text className="text-xs font-medium text-neutral-700">
+                              {item.category}
+                            </Text>
+                          </View>
+                          <Text className="text-sm text-neutral-500">
+                            Qty: {item.quantity}
                           </Text>
                         </View>
-                        <Text className="text-sm text-neutral-500">
-                          Qty: {item.quantity}
-                        </Text>
+                        {item.barcode && (
+                          <View className="mt-2 flex-row items-center">
+                            <Ionicons name="barcode-outline" size={14} color="#9CA3AF" />
+                            <Text className="text-xs text-neutral-500 ml-1">
+                              Model/SKU: {item.barcode}
+                            </Text>
+                          </View>
+                        )}
+                        {item.description && (
+                          <Text className="text-xs text-neutral-500 mt-1" numberOfLines={1}>
+                            {item.description}
+                          </Text>
+                        )}
                       </View>
+                      <Ionicons name="link" size={24} color="#4F46E5" />
                     </View>
-                    <Ionicons name="link" size={24} color="#4F46E5" />
                   </Pressable>
                 )}
               />

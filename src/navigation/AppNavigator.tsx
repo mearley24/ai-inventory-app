@@ -10,6 +10,7 @@ import ScannerScreen from "../screens/ScannerScreen";
 import TimeTrackerScreen from "../screens/TimeTrackerScreen";
 import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
+import ImportScreen from "../screens/ImportScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -106,6 +107,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="EditItem"
         component={EditItemScreen}
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="Import"
+        component={ImportScreen}
         options={{ presentation: "modal" }}
       />
     </Stack.Navigator>

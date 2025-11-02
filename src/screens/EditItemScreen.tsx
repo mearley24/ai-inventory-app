@@ -13,6 +13,7 @@ export default function EditItemScreen({ navigation, route }: any) {
 
   const [name, setName] = React.useState(item.name);
   const [quantity, setQuantity] = React.useState(item.quantity.toString());
+  const [price, setPrice] = React.useState(item.price?.toString() || "");
   const [category, setCategory] = React.useState(item.category);
   const [description, setDescription] = React.useState(item.description || "");
   const [lowStockThreshold, setLowStockThreshold] = React.useState(
@@ -27,6 +28,7 @@ export default function EditItemScreen({ navigation, route }: any) {
     updateItem(item.id, {
       name: name.trim(),
       quantity: parseInt(quantity) || 0,
+      price: price ? parseFloat(price) : undefined,
       category,
       description: description.trim() || undefined,
       lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold) : undefined,
@@ -139,6 +141,28 @@ export default function EditItemScreen({ navigation, route }: any) {
                   <Ionicons name="add" size={24} color="white" />
                 </Pressable>
               </View>
+            </View>
+
+            {/* Price Input */}
+            <View className="mb-6">
+              <Text className="text-sm font-semibold text-neutral-700 mb-2">
+                Price
+              </Text>
+              <TextInput
+                className="bg-white rounded-xl px-4 py-3 text-base text-neutral-900"
+                placeholder="0.00"
+                placeholderTextColor="#9CA3AF"
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="decimal-pad"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              />
             </View>
 
             {/* Category Selection */}

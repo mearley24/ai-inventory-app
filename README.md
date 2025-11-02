@@ -9,9 +9,11 @@ A beautiful, AI-powered inventory management app with barcode scanning and time 
 - Search and filter items by name, description, and category
 - Add items manually or through barcode scanning
 - Edit item details with intuitive +/- quantity controls
+- Price tracking for each item
 - Delete items with a simple tap
 - Low stock alerts to keep track of inventory levels
 - Category-based organization (Electronics, Food, Clothing, Tools, Office, General)
+- **Bulk CSV/Excel import** for loading large price lists
 
 ### 📷 Barcode Scanner
 - Fast, reliable barcode scanning using the device camera
@@ -77,7 +79,8 @@ src/
 │   ├── ScannerScreen.tsx        # Barcode scanner
 │   ├── TimeTrackerScreen.tsx    # Time tracking
 │   ├── AddItemScreen.tsx        # Add new items
-│   └── EditItemScreen.tsx       # Edit existing items
+│   ├── EditItemScreen.tsx       # Edit existing items
+│   └── ImportScreen.tsx         # CSV/Excel import
 ├── navigation/        # Navigation configuration
 │   └── AppNavigator.tsx         # Tab and stack navigators
 ├── state/            # Zustand stores
@@ -95,10 +98,31 @@ Each inventory item includes:
 - Name
 - Barcode (optional, from scanning)
 - Quantity
+- **Price** (optional, for tracking costs/selling prices)
 - Category
 - Description (optional)
 - Low stock threshold (optional)
 - Creation and update timestamps
+
+## CSV/Excel Import
+
+The app includes a powerful import feature to load large price lists quickly:
+
+**How to Import:**
+1. Tap the "Import" button in the Inventory screen header
+2. Prepare a CSV file with columns like: Name, Price, Quantity, Category, Description, Barcode
+3. Select your CSV file using the file picker
+4. Items are automatically parsed and added to your inventory
+
+**Supported Column Names:**
+- Name, Item, Product (for item name)
+- Price, Cost (for pricing)
+- Quantity, Qty, Stock (for quantity)
+- Category, Type (for categorization)
+- Description, Desc (for notes)
+- Barcode, SKU, UPC (for barcodes)
+
+The import parser is flexible and will recognize common variations of these column names.
 
 ### Projects & Time Tracking
 Each project tracks:
@@ -125,7 +149,8 @@ The app uses Zustand with AsyncStorage to persist:
 
 ## Future Enhancements
 
-Possible features to add:
+### Planned Features:
+- **Team Collaboration & Accounts**: Multi-user support with login system for teams to collaborate on jobs
 - Export inventory to CSV/PDF
 - Inventory analytics and charts
 - Photo capture for items
@@ -133,7 +158,8 @@ Possible features to add:
 - Time tracking reports and exports
 - Project analytics and insights
 - Cloud sync across devices
-- Sharing and collaboration
+- Role-based permissions for team members
+- Job assignment and tracking
 
 ## Notes
 

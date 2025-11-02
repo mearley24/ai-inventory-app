@@ -32,7 +32,18 @@ export default function InventoryScreen({ navigation }: any) {
       <SafeAreaView edges={["top"]} className="flex-1">
         {/* Header */}
         <View className="px-6 pt-4 pb-3">
-          <Text className="text-3xl font-bold text-neutral-900 mb-1">Inventory</Text>
+          <View className="flex-row items-center justify-between mb-1">
+            <View className="flex-1">
+              <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
+            </View>
+            <Pressable
+              onPress={() => navigation.navigate("Import")}
+              className="bg-indigo-100 rounded-full px-4 py-2 flex-row items-center"
+            >
+              <Ionicons name="cloud-upload" size={16} color="#4F46E5" />
+              <Text className="text-indigo-600 font-semibold ml-2">Import</Text>
+            </Pressable>
+          </View>
           <Text className="text-base text-neutral-500">
             {items.length} items • {lowStockItems.length} low stock
           </Text>
@@ -150,6 +161,14 @@ export default function InventoryScreen({ navigation }: any) {
                       <Text className="text-sm text-neutral-500">
                         Qty: {item.quantity}
                       </Text>
+                      {item.price && (
+                        <>
+                          <Text className="text-sm text-neutral-400 mx-1">•</Text>
+                          <Text className="text-sm font-semibold text-indigo-600">
+                            ${item.price.toFixed(2)}
+                          </Text>
+                        </>
+                      )}
                     </View>
                   </View>
 

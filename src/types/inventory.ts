@@ -4,6 +4,7 @@ export interface InventoryItem {
   barcode?: string;
   quantity: number;
   category: string;
+  price?: number;
   description?: string;
   imageUrl?: string;
   lowStockThreshold?: number;

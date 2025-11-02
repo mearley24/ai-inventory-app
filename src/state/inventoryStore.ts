@@ -6,8 +6,10 @@ import { InventoryItem } from "../types/inventory";
 interface InventoryState {
   items: InventoryItem[];
   addItem: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
+  addItems: (items: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">[]) => void;
   updateItem: (id: string, updates: Partial<InventoryItem>) => void;
   deleteItem: (id: string) => void;
+  clearAll: () => void;
   getItemByBarcode: (barcode: string) => InventoryItem | undefined;
   getLowStockItems: () => InventoryItem[];
 }
@@ -27,6 +29,16 @@ export const useInventoryStore = create<InventoryState>()(
         set((state) => ({ items: [...state.items, newItem] }));
       },
 
+      addItems: (items) => {
+        const newItems: InventoryItem[] = items.map((item) => ({
+          ...item,
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }));
+        set((state) => ({ items: [...state.items, ...newItems] }));
+      },
+
       updateItem: (id, updates) => {
         set((state) => ({
           items: state.items.map((item) =>
@@ -41,6 +53,10 @@ export const useInventoryStore = create<InventoryState>()(
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
+      },
+
+      clearAll: () => {
+        set({ items: [] });
       },
 
       getItemByBarcode: (barcode) => {

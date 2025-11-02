@@ -10,6 +10,7 @@ export default function InventoryScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("All");
   const [showOnlyStarred, setShowOnlyStarred] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<"all" | "inStock">("inStock");
   const items = useInventoryStore((s) => s.items);
   const deleteItem = useInventoryStore((s) => s.deleteItem);
   const toggleStarred = useInventoryStore((s) => s.toggleStarred);
@@ -24,6 +25,9 @@ export default function InventoryScreen({ navigation }: any) {
 
   const lowStockItems = React.useMemo(() => getLowStockItems(), [items]);
   const starredLowStockItems = React.useMemo(() => getStarredLowStockItems(), [items]);
+
+  // Count items in stock
+  const inStockCount = React.useMemo(() => items.filter((item) => item.quantity > 0).length, [items]);
 
   // Show low stock alert for starred items on mount (only once)
   const hasShownAlert = React.useRef(false);
@@ -40,14 +44,26 @@ export default function InventoryScreen({ navigation }: any) {
 
   // Memoize filtered items
   const filteredItems = React.useMemo(() => {
-    return items.filter((item) => {
+    let filtered = items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
       const matchesStarred = !showOnlyStarred || item.isStarred;
-      return matchesSearch && matchesCategory && matchesStarred;
+      const matchesTab = activeTab === "all" || (activeTab === "inStock" && item.quantity > 0);
+      return matchesSearch && matchesCategory && matchesStarred && matchesTab;
     });
-  }, [items, searchQuery, selectedCategory, showOnlyStarred]);
+
+    // Sort: items with quantity > 0 at top, then by quantity descending
+    filtered.sort((a, b) => {
+      // First, prioritize items with quantity > 0
+      if (a.quantity > 0 && b.quantity === 0) return -1;
+      if (a.quantity === 0 && b.quantity > 0) return 1;
+      // Then sort by quantity descending
+      return b.quantity - a.quantity;
+    });
+
+    return filtered;
+  }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab]);
 
   const isLowStock = React.useCallback((item: InventoryItem) => {
     return item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
@@ -209,6 +225,28 @@ export default function InventoryScreen({ navigation }: any) {
                 </Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+
+        {/* Tabs */}
+        <View className="px-6 mb-4">
+          <View className="flex-row bg-white rounded-xl p-1 shadow-sm">
+            <Pressable
+              onPress={() => setActiveTab("inStock")}
+              className={`flex-1 py-2 rounded-lg ${activeTab === "inStock" ? "bg-indigo-600" : "bg-transparent"}`}
+            >
+              <Text className={`text-center font-semibold ${activeTab === "inStock" ? "text-white" : "text-neutral-600"}`}>
+                In Stock ({inStockCount})
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab("all")}
+              className={`flex-1 py-2 rounded-lg ${activeTab === "all" ? "bg-indigo-600" : "bg-transparent"}`}
+            >
+              <Text className={`text-center font-semibold ${activeTab === "all" ? "text-white" : "text-neutral-600"}`}>
+                All Items ({items.length})
+              </Text>
+            </Pressable>
           </View>
         </View>
 

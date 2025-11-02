@@ -78,7 +78,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
   const handlePickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/pdf", "image/*"],
+        type: ["image/*"],
         copyToCacheDirectory: true,
       });
 
@@ -87,7 +87,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
         setSelectedDocument({
           uri: asset.uri,
           name: asset.name,
-          type: asset.mimeType || "application/pdf",
+          type: asset.mimeType || "image/jpeg",
         });
         setSelectedImage(null);
         setParsedInvoice(null);
@@ -245,10 +245,10 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
               >
                 <Ionicons name="document-text" size={48} color="white" />
                 <Text className="text-white text-lg font-semibold mt-4">
-                  Upload Document
+                  Upload Image File
                 </Text>
                 <Text className="text-white/80 text-sm mt-1">
-                  Select PDF or image file
+                  Select image file from device
                 </Text>
               </Pressable>
             </View>
@@ -312,7 +312,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
                   {selectedDocument.name}
                 </Text>
                 <Text className="text-white/80 text-sm mt-1">
-                  {selectedDocument.type === "application/pdf" ? "PDF Document" : "Image File"}
+                  Image File
                 </Text>
               </View>
 

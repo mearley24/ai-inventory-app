@@ -12,6 +12,24 @@ export async function parseInvoiceImage(
   imageUri: string
 ): Promise<ParsedInvoice> {
   try {
+    // Check if this is a PDF file
+    if (imageUri.toLowerCase().endsWith('.pdf') || imageUri.includes('application/pdf')) {
+      throw new Error(
+        "PDF files are not supported yet. Please take a photo or screenshot of your invoice instead."
+      );
+    }
+
+    // Detect image format from URI
+    let mimeType = "image/jpeg";
+    const lowerUri = imageUri.toLowerCase();
+    if (lowerUri.includes('.png') || lowerUri.includes('image/png')) {
+      mimeType = "image/png";
+    } else if (lowerUri.includes('.gif') || lowerUri.includes('image/gif')) {
+      mimeType = "image/gif";
+    } else if (lowerUri.includes('.webp') || lowerUri.includes('image/webp')) {
+      mimeType = "image/webp";
+    }
+
     // Read the image as base64
     const base64Image = await FileSystem.readAsStringAsync(imageUri, {
       encoding: FileSystem.EncodingType.Base64,
@@ -42,7 +60,7 @@ export async function parseInvoiceImage(
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
+                  url: `data:${mimeType};base64,${base64Image}`,
                   detail: "high",
                 },
               },

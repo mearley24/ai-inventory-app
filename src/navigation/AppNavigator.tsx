@@ -18,6 +18,7 @@ import DuplicateFinderScreen from "../screens/DuplicateFinderScreen";
 import RecategorizeScreen from "../screens/RecategorizeScreen";
 import DToolsImportScreen from "../screens/DToolsImportScreen";
 import AddPasswordScreen from "../screens/AddPasswordScreen";
+import ViewPasswordScreen from "../screens/ViewPasswordScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import { useAuthStore } from "../state/authStore";
@@ -185,6 +186,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="AddPassword"
             component={AddPasswordScreen}
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="ViewPassword"
+            component={ViewPasswordScreen}
             options={{ presentation: "modal" }}
           />
         </>

@@ -6,6 +6,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as XLSX from "xlsx";
 import { useInventoryStore } from "../state/inventoryStore";
+import { matchCategory } from "../utils/categories";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
 export default function ImportScreen({ navigation }: any) {
@@ -51,7 +52,7 @@ export default function ImportScreen({ navigation }: any) {
       const item: any = {
         name: "",
         quantity: 1,
-        category: "General",
+        category: "Other",
       };
 
       headers.forEach((header, index) => {
@@ -71,7 +72,7 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock") || header.includes("count")) {
           item.quantity = parseInt(String(value)) || 1;
         } else if (header.includes("category") || header.includes("type") || header.includes("class")) {
-          item.category = stringValue;
+          item.category = matchCategory(stringValue);
         } else if (header.includes("barcode") || header.includes("sku") || header.includes("upc") || header.includes("code")) {
           item.barcode = stringValue;
         }
@@ -99,7 +100,7 @@ export default function ImportScreen({ navigation }: any) {
       const item: any = {
         name: "",
         quantity: 1,
-        category: "General",
+        category: "Other",
       };
 
       headers.forEach((header, index) => {
@@ -113,7 +114,7 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock")) {
           item.quantity = parseInt(value) || 1;
         } else if (header.includes("category") || header.includes("type")) {
-          item.category = value;
+          item.category = matchCategory(value);
         } else if (header.includes("description") || header.includes("desc")) {
           item.description = value;
         } else if (header.includes("barcode") || header.includes("sku") || header.includes("upc")) {

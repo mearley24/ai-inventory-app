@@ -3,9 +3,10 @@ import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Pla
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
+import { SNAPAV_CATEGORIES } from "../utils/categories";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-const CATEGORIES = ["Electronics", "Food", "Clothing", "Tools", "Office", "General"];
+const CATEGORIES = SNAPAV_CATEGORIES;
 
 export default function AddItemScreen({ navigation, route }: any) {
   const { barcode, suggestedName, suggestedCategory } = route.params || {};

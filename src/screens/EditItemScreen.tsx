@@ -5,7 +5,27 @@ import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "../state/inventoryStore";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-const CATEGORIES = ["Electronics", "Food", "Clothing", "Tools", "Office", "General"];
+const CATEGORIES = [
+  "Control4",
+  "Audio",
+  "Bulk Wire & Connectors",
+  "Cables",
+  "Conferencing",
+  "Control",
+  "Lighting",
+  "Media Distribution",
+  "Mounts",
+  "Networking",
+  "Power",
+  "Projectors & Screens",
+  "Racks",
+  "Smart Security & Access",
+  "Speakers",
+  "Surveillance",
+  "Televisions",
+  "Tools & Hardware",
+  "Other"
+];
 
 export default function EditItemScreen({ navigation, route }: any) {
   const { item } = route.params;

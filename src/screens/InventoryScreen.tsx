@@ -385,33 +385,31 @@ export default function InventoryScreen({ navigation }: any) {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-6 mb-4"
-            contentContainerStyle={{ gap: 10, paddingRight: 24 }}
+            contentContainerStyle={{ gap: 12, paddingRight: 24 }}
           >
             {suppliers.map((supplier) => (
               <Pressable
                 key={supplier}
                 onPress={() => setSelectedSupplier(supplier)}
-                className={`px-5 py-2.5 rounded-full ${
-                  selectedSupplier === supplier
-                    ? "bg-purple-600"
-                    : "bg-white"
-                }`}
                 style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 24,
+                  backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#FFFFFF",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.05,
                   shadowRadius: 2,
                   elevation: 1,
-                  minWidth: 80,
                 }}
               >
                 <Text
-                  className={`font-semibold text-sm text-center ${
-                    selectedSupplier === supplier
-                      ? "text-white"
-                      : "text-neutral-700"
-                  }`}
-                  numberOfLines={1}
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: selectedSupplier === supplier ? "#FFFFFF" : "#374151",
+                    textAlign: "center",
+                  }}
                 >
                   {supplier}
                 </Text>
@@ -426,39 +424,38 @@ export default function InventoryScreen({ navigation }: any) {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-6 mb-4"
-            contentContainerStyle={{ gap: 10, paddingRight: 24 }}
+            contentContainerStyle={{ gap: 12, paddingRight: 24 }}
           >
             {locations.map((location) => (
               <Pressable
                 key={location}
                 onPress={() => setSelectedLocation(location)}
-                className={`px-5 py-2.5 rounded-full flex-row items-center ${
-                  selectedLocation === location
-                    ? "bg-emerald-600"
-                    : "bg-white"
-                }`}
                 style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 24,
+                  backgroundColor: selectedLocation === location ? "#059669" : "#FFFFFF",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.05,
                   shadowRadius: 2,
                   elevation: 1,
-                  minWidth: 100,
+                  flexDirection: "row",
+                  alignItems: "center",
                 }}
               >
                 <Ionicons
                   name="location"
                   size={16}
-                  color={selectedLocation === location ? "white" : "#10B981"}
+                  color={selectedLocation === location ? "#FFFFFF" : "#10B981"}
                   style={{ marginRight: 6 }}
                 />
                 <Text
-                  className={`font-semibold text-sm ${
-                    selectedLocation === location
-                      ? "text-white"
-                      : "text-neutral-700"
-                  }`}
-                  numberOfLines={1}
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: selectedLocation === location ? "#FFFFFF" : "#374151",
+                  }}
                 >
                   {location}
                 </Text>
@@ -490,27 +487,32 @@ export default function InventoryScreen({ navigation }: any) {
         <View className="px-6 mb-4 flex-row gap-2">
           <Pressable
             onPress={() => setShowOnlyStarred(!showOnlyStarred)}
-            className={`px-5 py-2.5 rounded-full flex-row items-center ${
-              showOnlyStarred ? "bg-amber-500" : "bg-white"
-            }`}
             style={{
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              borderRadius: 24,
+              backgroundColor: showOnlyStarred ? "#F59E0B" : "#FFFFFF",
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.05,
               shadowRadius: 2,
               elevation: 1,
-              minWidth: 120,
+              flexDirection: "row",
+              alignItems: "center",
             }}
           >
             <Ionicons
               name={showOnlyStarred ? "star" : "star-outline"}
               size={18}
-              color={showOnlyStarred ? "white" : "#F59E0B"}
+              color={showOnlyStarred ? "#FFFFFF" : "#F59E0B"}
             />
             <Text
-              className={`font-semibold text-sm ml-2 ${
-                showOnlyStarred ? "text-white" : "text-amber-600"
-              }`}
+              style={{
+                fontSize: 15,
+                fontWeight: "600",
+                color: showOnlyStarred ? "#FFFFFF" : "#D97706",
+                marginLeft: 8,
+              }}
             >
               Favorites
             </Text>
@@ -522,33 +524,31 @@ export default function InventoryScreen({ navigation }: any) {
           horizontal
           showsHorizontalScrollIndicator={false}
           className="px-6 mb-4"
-          contentContainerStyle={{ gap: 10, paddingRight: 24 }}
+          contentContainerStyle={{ gap: 12, paddingRight: 24 }}
         >
           {categories.map((category) => (
             <Pressable
               key={category}
               onPress={() => setSelectedCategory(category)}
-              className={`px-5 py-2.5 rounded-full ${
-                selectedCategory === category
-                  ? "bg-indigo-600"
-                  : "bg-white"
-              }`}
               style={{
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 24,
+                backgroundColor: selectedCategory === category ? "#4F46E5" : "#FFFFFF",
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.05,
                 shadowRadius: 2,
                 elevation: 1,
-                minWidth: 80,
               }}
             >
               <Text
-                className={`font-semibold text-sm text-center ${
-                  selectedCategory === category
-                    ? "text-white"
-                    : "text-neutral-700"
-                }`}
-                numberOfLines={1}
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: selectedCategory === category ? "#FFFFFF" : "#374151",
+                  textAlign: "center",
+                }}
               >
                 {category}
               </Text>

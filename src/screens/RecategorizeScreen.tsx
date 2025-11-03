@@ -120,19 +120,28 @@ export default function RecategorizeScreen({ navigation }: Props) {
       return;
     }
 
+    // Calculate estimated time
+    const estimatedMinutes = Math.ceil((items.length / 30) / 3 * 5 / 60); // 30 per batch, 3 concurrent, ~5 sec each
+
+    let warningMessage = `This will process all ${items.length} items with AI:\n\n1. Extract categories from ${websiteUrl}\n2. Analyze items and categorize\n3. Auto-update categories & subcategories\n\nEstimated time: ~${estimatedMinutes} minutes`;
+
+    if (items.length > 500) {
+      warningMessage += `\n\n⚠️ IMPORTANT: Keep your phone awake and the app open during processing. If interrupted, no changes will be applied.`;
+    }
+
     Alert.alert(
       "Recategorize All Items",
-      `This will run in the background:\n\n1. Extract categories from ${websiteUrl}\n2. Analyze all ${items.length} items with AI\n3. Auto-update categories & subcategories\n\nYou can continue using the app while this runs!`,
+      warningMessage,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Start in Background",
+          text: "Start Processing",
           onPress: async () => {
             try {
               // Create background job
               const job = await createJob(websiteUrl, items.length);
               setActiveJob(job);
-              setCanNavigateAway(true);
+              setCanNavigateAway(false); // Keep them on screen
 
               // Start monitoring
               monitorJob(job.id);
@@ -143,8 +152,8 @@ export default function RecategorizeScreen({ navigation }: Props) {
               });
 
               Alert.alert(
-                "Started!",
-                "Recategorization is running in the background. You can navigate away and check progress later.",
+                "Processing Started",
+                `Keep the app open and your phone awake.\nProgress: 0 / ${items.length}`,
                 [{ text: "OK" }]
               );
             } catch (error) {

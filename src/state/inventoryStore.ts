@@ -386,9 +386,11 @@ export const useInventoryStore = create<InventoryState>()(
     {
       name: "inventory-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // DON'T persist items - they come from Firestore
+      // Only persist non-item data to improve performance
       partialize: (state) => ({
         currentCompanyId: state.currentCompanyId,
+        // Don't persist items array - it comes from Firestore
+        // Don't persist unsubscribe function
       }),
     }
   )

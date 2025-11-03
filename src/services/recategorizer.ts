@@ -232,6 +232,12 @@ export async function recategorizeItems(
     return results;
   }
 
+  // Check for API key
+  if (!OPENAI_API_KEY) {
+    console.error("OpenAI API key is not configured");
+    throw new Error("OpenAI API key is not configured. Please add EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY to your environment.");
+  }
+
   onProgress?.("Analyzing items with AI...", 0, items.length);
 
   // Get flat list of category > subcategory combinations
@@ -288,13 +294,15 @@ Rules:
 - Match based on product name and description
 - Return valid JSON only`;
 
+      console.log("Making OpenAI API request...");
+
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
           },
           body: JSON.stringify({
             model: "gpt-4o-mini",
@@ -310,10 +318,13 @@ Rules:
         }
       );
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error("OpenAI API error response:", errorText);
         throw new Error(
-          `OpenAI API error: ${errorData.error?.message || response.statusText}`
+          `OpenAI API error (${response.status}): ${errorText}`
         );
       }
 
@@ -353,7 +364,18 @@ Rules:
       );
     } catch (error) {
       console.error("Error in batch categorization:", error);
+      // Log more details about the error
+      if (error instanceof Error) {
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
       // Continue with next batch even if one fails
+      onProgress?.(
+        `Error processing batch, continuing... (${processedCount}/${items.length})`,
+        processedCount,
+        items.length
+      );
     }
   }
 

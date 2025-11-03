@@ -52,7 +52,7 @@ export default function ImportScreen({ navigation }: any) {
 
       const item: any = {
         name: "",
-        quantity: 1,
+        quantity: 0,
         category: "Other",
       };
 
@@ -71,7 +71,8 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("price") || header.includes("cost") || header.includes("retail")) {
           item.price = parseFloat(String(value).replace(/[^0-9.]/g, "")) || 0;
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock") || header.includes("count")) {
-          item.quantity = parseInt(String(value)) || 1;
+          // Ignore quantity from CSV - always set to 0
+          // item.quantity = parseInt(String(value)) || 0;
         } else if (header.includes("category") || header.includes("type") || header.includes("class")) {
           item.category = matchCategory(stringValue);
         } else if (header.includes("barcode") || header.includes("sku") || header.includes("upc") || header.includes("code")) {
@@ -100,7 +101,7 @@ export default function ImportScreen({ navigation }: any) {
 
       const item: any = {
         name: "",
-        quantity: 1,
+        quantity: 0,
         category: "Other",
       };
 
@@ -113,7 +114,8 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("price") || header.includes("cost")) {
           item.price = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock")) {
-          item.quantity = parseInt(value) || 1;
+          // Ignore quantity from CSV - always set to 0
+          // item.quantity = parseInt(value) || 0;
         } else if (header.includes("category") || header.includes("type")) {
           item.category = matchCategory(value);
         } else if (header.includes("description") || header.includes("desc")) {

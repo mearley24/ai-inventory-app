@@ -104,12 +104,12 @@ export default function DuplicateFinderScreen({ navigation }: any) {
         </View>
 
         {/* Duplicate Items */}
-        {group.map((item) => {
+        {group.map((item, itemIndex) => {
           const isSelected = selectedGroups[groupIndex] === item.id;
 
           return (
             <Pressable
-              key={item.id}
+              key={`${groupIndex}-${item.id}-${itemIndex}`}
               onPress={() => {
                 setSelectedGroups((prev) => ({
                   ...prev,

@@ -266,8 +266,9 @@ export async function recategorizeItems(
   // Get flat list of category > subcategory combinations
   const flatCategories = getFlatCategoryList(categoryStructure);
 
-  // SPEED OPTIMIZATION 1: Larger batch size (50 instead of 20) for fewer API calls
-  const batchSize = 50;
+  // SPEED OPTIMIZATION 1: Batch size of 30 (reduced from 50 to prevent JSON parse errors)
+  // Larger batches can cause incomplete responses or parsing errors
+  const batchSize = 30;
   const batches = [];
   for (let i = 0; i < items.length; i += batchSize) {
     batches.push(items.slice(i, i + batchSize));
@@ -328,7 +329,28 @@ Return JSON array:
         throw new Error(`API error (${response.status}): ${errorText}`);
       }
 
-      const data = await response.json();
+      // Parse JSON response with error handling
+      let data;
+      try {
+        const responseText = await response.text();
+        console.log(`Batch ${batchIndex} response length:`, responseText.length);
+
+        if (!responseText || responseText.trim().length === 0) {
+          throw new Error("Empty response from API");
+        }
+
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error(`Batch ${batchIndex} JSON parse error:`, jsonError);
+        console.error(`Response may have been too large or incomplete`);
+        throw new Error(`Failed to parse API response: ${jsonError instanceof Error ? jsonError.message : "Unknown error"}`);
+      }
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error(`Batch ${batchIndex} invalid response structure:`, JSON.stringify(data));
+        throw new Error("Invalid response structure from API");
+      }
+
       let content = data.choices[0].message.content.trim();
 
       // Remove markdown code blocks if present
@@ -336,11 +358,23 @@ Return JSON array:
         content = content.replace(/```json\n?|\n?```/g, "").trim();
       }
 
-      const categorizations = JSON.parse(content) as {
-        id: string;
-        category: string;
-        subcategory: string;
-      }[];
+      // Parse categorizations with error handling
+      let categorizations;
+      try {
+        categorizations = JSON.parse(content) as {
+          id: string;
+          category: string;
+          subcategory: string;
+        }[];
+      } catch (parseError) {
+        console.error(`Batch ${batchIndex} failed to parse categorizations:`, content.substring(0, 200));
+        throw new Error(`Failed to parse categorization results: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
+      }
+
+      if (!Array.isArray(categorizations)) {
+        console.error(`Batch ${batchIndex} categorizations is not an array:`, typeof categorizations);
+        throw new Error("Invalid categorization format - expected array");
+      }
 
       // Process results
       for (const cat of categorizations) {
@@ -371,9 +405,15 @@ Return JSON array:
       console.error(`Error in batch ${batchIndex}:`, error);
       if (error instanceof Error) {
         console.error("Error details:", error.message);
+        console.error("Error stack:", error.stack);
       }
+
+      // Mark these items as processed even though they failed
+      // so progress counter is accurate
+      processedCount += batch.length;
+
       onProgress?.(
-        `Error in batch ${batchIndex}, continuing... (${processedCount}/${items.length})`,
+        `Error in batch ${batchIndex}, skipping ${batch.length} items... (${processedCount}/${items.length})`,
         processedCount,
         items.length
       );

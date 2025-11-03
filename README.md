@@ -36,10 +36,10 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - **🎯 Subcategory Support** - Precise categorization (e.g., "Audio > Amplifiers", "Control4 > Controllers")
 - **🤖 AI-Powered Recategorization** - Automatically match items to correct categories & subcategories
 - **🔧 D-Tools Integration** - Import BOMs directly from D-Tools SI exports
-- **Bulk CSV/Excel import** for loading large price lists
-- **📄 AI-Powered Invoice Upload** - Scan/upload invoices (images & PDFs) to auto-populate inventory
+- **Bulk CSV/Excel import** with auto-merge and quantity reset option
+- **📄 AI-Powered Invoice Upload** - Auto-merges duplicates and adds quantities
 - **📁 Invoice Folder System** ⭐ NEW! - Drop invoices in a folder for automatic batch processing
-- **🔄 Duplicate Finder** - Automatically merge duplicate items and reset quantities
+- **🔄 Auto-Merge System** - Duplicates are automatically handled on all imports
 - Smart category matching during import
 
 ### 📷 Barcode Scanner
@@ -216,7 +216,7 @@ Each inventory item includes:
 
 ## AI-Powered Invoice Upload & Folder System ⭐ NEW!
 
-Automatically populate inventory from invoice photos and PDFs with two convenient methods:
+Automatically populate inventory from invoice photos and PDFs with automatic duplicate merging:
 
 ### Method 1: Individual Invoice Upload
 
@@ -234,7 +234,13 @@ Automatically populate inventory from invoice photos and PDFs with two convenien
    - SKU/barcode numbers
 4. Review extracted items (all selected by default)
 5. Tap items to deselect any you don't want to import
-6. Tap "Add to Inventory" to import selected items
+6. Tap "Add to Inventory" - duplicates are automatically merged!
+
+**Auto-Merge Behavior:**
+- **Adds Quantities**: For existing items, quantities are added together
+- **Updates Info**: Price and barcode are updated if provided
+- **New Items**: Items that don't exist are added automatically
+- **No Manual Review**: Everything happens in the background
 
 **Supported Formats:**
 - Images: PNG, JPEG, GIF, WEBP (via OpenAI GPT-4o Vision)
@@ -313,13 +319,23 @@ Automatically update all inventory items to match precise categories and subcate
 
 ## CSV/Excel Import
 
-The app includes a powerful import feature to load large price lists quickly:
+The app includes a powerful import feature with automatic duplicate handling:
 
 **How to Import:**
-1. Tap the "Import" button in the Inventory screen header
+1. Tap the "CSV" button in the Inventory screen
 2. Prepare a CSV file with columns like: Name, Price, Quantity, Category, Description, Barcode
-3. Select your CSV file using the file picker
-4. Items are automatically parsed and added to your inventory
+3. Choose whether to reset quantities to 0 (recommended for price lists)
+4. Select your CSV file using the file picker
+5. Items are automatically merged with existing inventory
+
+**Auto-Merge Behavior:**
+- **Duplicate Detection**: Items with the same name are automatically detected
+- **Smart Merging**: Existing items are updated with new data (price, barcode, category)
+- **Quantity Handling**:
+  - Check "Reset all quantities to 0" for price lists (default)
+  - Uncheck to preserve quantities from the CSV file
+- **New Items**: Items that don't exist are added automatically
+- **No Manual Review**: Everything happens in the background instantly
 
 **Supported Column Names:**
 - Name, Item, Product (for item name)

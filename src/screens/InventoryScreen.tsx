@@ -280,7 +280,7 @@ export default function InventoryScreen({ navigation }: any) {
               <Text className="text-pink-600 font-semibold ml-2">Folder</Text>
             </Pressable>
             <Pressable
-              onPress={() => navigation.navigate("DuplicateFinder")}
+              onPress={() => navigation.navigate("Recategorize")}
               className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
               style={{
                 shadowColor: "#000",
@@ -290,26 +290,8 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="copy" size={20} color="#EA580C" />
-              <Text className="text-orange-700 font-semibold ml-2">Duplicates</Text>
-            </Pressable>
-          </View>
-
-          {/* AI Recategorize - Full Width */}
-          <View className="mb-3">
-            <Pressable
-              onPress={() => navigation.navigate("Recategorize")}
-              className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-                elevation: 1,
-              }}
-            >
               <Ionicons name="sparkles" size={20} color="#14B8A6" />
-              <Text className="text-teal-700 font-semibold ml-2">AI Recategorize</Text>
+              <Text className="text-teal-700 font-semibold ml-2">AI Categorize</Text>
             </Pressable>
           </View>
         </View>

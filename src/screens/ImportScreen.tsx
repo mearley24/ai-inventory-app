@@ -13,9 +13,12 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 export default function ImportScreen({ navigation }: any) {
   const [importing, setImporting] = React.useState(false);
   const [processingMessage, setProcessingMessage] = React.useState("");
-  const [importResult, setImportResult] = React.useState<{ success: number; failed: number } | null>(null);
+  const [importResult, setImportResult] = React.useState<{ success: number; failed: number; merged: number } | null>(null);
+  const [resetQuantities, setResetQuantities] = React.useState(true);
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
+  const updateItem = useInventoryStore((s) => s.updateItem);
+  const deleteItem = useInventoryStore((s) => s.deleteItem);
 
   const parseExcelOrCSV = async (uri: string, mimeType?: string) => {
     const isExcel = mimeType?.includes("spreadsheet") ||
@@ -71,8 +74,7 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("price") || header.includes("cost") || header.includes("retail")) {
           item.price = parseFloat(String(value).replace(/[^0-9.]/g, "")) || 0;
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock") || header.includes("count")) {
-          // Ignore quantity from CSV - always set to 0
-          // item.quantity = parseInt(String(value)) || 0;
+          item.quantity = parseInt(String(value)) || 0;
         } else if (header.includes("category") || header.includes("type") || header.includes("class")) {
           item.category = matchCategory(stringValue);
         } else if (header.includes("barcode") || header.includes("sku") || header.includes("upc") || header.includes("code")) {
@@ -114,8 +116,7 @@ export default function ImportScreen({ navigation }: any) {
         } else if (header.includes("price") || header.includes("cost")) {
           item.price = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
         } else if (header.includes("quantity") || header.includes("qty") || header.includes("stock")) {
-          // Ignore quantity from CSV - always set to 0
-          // item.quantity = parseInt(value) || 0;
+          item.quantity = parseInt(value) || 0;
         } else if (header.includes("category") || header.includes("type")) {
           item.category = matchCategory(value);
         } else if (header.includes("description") || header.includes("desc")) {
@@ -131,6 +132,63 @@ export default function ImportScreen({ navigation }: any) {
     }
 
     return items;
+  };
+
+  const autoMergeAndImport = async (parsedItems: any[]) => {
+    let successCount = 0;
+    let mergedCount = 0;
+
+    for (const newItem of parsedItems) {
+      const normalizedName = newItem.name.toLowerCase().trim();
+
+      // Find existing item with same name
+      const existingItem = items.find(
+        (item) => item.name.toLowerCase().trim() === normalizedName
+      );
+
+      if (existingItem) {
+        // Merge: Update existing item
+        const updates: any = {};
+
+        // Update price if provided
+        if (newItem.price) {
+          updates.price = newItem.price;
+        }
+
+        // Update barcode if provided
+        if (newItem.barcode && !existingItem.barcode) {
+          updates.barcode = newItem.barcode;
+        }
+
+        // Update description if provided
+        if (newItem.description && !existingItem.description) {
+          updates.description = newItem.description;
+        }
+
+        // Handle quantity based on resetQuantities checkbox
+        if (resetQuantities) {
+          updates.quantity = 0;
+        }
+
+        // Update category if better match
+        if (newItem.category && newItem.category !== "Other") {
+          updates.category = newItem.category;
+        }
+
+        await updateItem(existingItem.id, updates);
+        mergedCount++;
+      } else {
+        // New item: Add to inventory
+        const itemToAdd = {
+          ...newItem,
+          quantity: resetQuantities ? 0 : (newItem.quantity || 0),
+        };
+        await addItems([itemToAdd]);
+        successCount++;
+      }
+    }
+
+    return { successCount, mergedCount };
   };
 
   const handleImport = async () => {
@@ -171,7 +229,7 @@ export default function ImportScreen({ navigation }: any) {
         setProcessingMessage("");
         Alert.alert(
           "Large Import",
-          `You are about to import ${parsedItems.length} items. This may take a moment.`,
+          `You are about to import ${parsedItems.length} items. This may take a moment. Duplicates will be auto-merged.`,
           [
             {
               text: "Cancel",
@@ -181,16 +239,9 @@ export default function ImportScreen({ navigation }: any) {
               text: "Continue",
               onPress: async () => {
                 setImporting(true);
-                setProcessingMessage("Importing items...");
-                // Add items in batches to prevent freezing
-                const batchSize = 50;
-                for (let i = 0; i < parsedItems.length; i += batchSize) {
-                  const batch = parsedItems.slice(i, i + batchSize);
-                  addItems(batch);
-                  setProcessingMessage(`Importing items... ${Math.min(i + batchSize, parsedItems.length)}/${parsedItems.length}`);
-                  await new Promise((resolve) => setTimeout(resolve, 10));
-                }
-                setImportResult({ success: parsedItems.length, failed: 0 });
+                setProcessingMessage("Auto-merging and importing...");
+                const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
+                setImportResult({ success: successCount, failed: 0, merged: mergedCount });
                 setImporting(false);
                 setProcessingMessage("");
               },
@@ -198,10 +249,10 @@ export default function ImportScreen({ navigation }: any) {
           ]
         );
       } else {
-        // Add items to store
-        setProcessingMessage("Importing items...");
-        addItems(parsedItems);
-        setImportResult({ success: parsedItems.length, failed: 0 });
+        // Auto-merge and import
+        setProcessingMessage("Auto-merging and importing...");
+        const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
+        setImportResult({ success: successCount, failed: 0, merged: mergedCount });
         setImporting(false);
         setProcessingMessage("");
       }
@@ -255,11 +306,43 @@ export default function ImportScreen({ navigation }: any) {
                     </Text>
                   </View>
                   <Text className="text-base text-emerald-700">
-                    Successfully imported {importResult.success} items
+                    {importResult.success} new items added
                   </Text>
+                  {importResult.merged > 0 && (
+                    <Text className="text-base text-emerald-700">
+                      {importResult.merged} items merged with existing
+                    </Text>
+                  )}
                 </View>
               </Animated.View>
             )}
+
+            {/* Reset Quantities Checkbox */}
+            <Pressable
+              onPress={() => setResetQuantities(!resetQuantities)}
+              className="bg-white rounded-2xl p-4 mb-6 flex-row items-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                elevation: 2,
+              }}
+            >
+              <Ionicons
+                name={resetQuantities ? "checkbox" : "square-outline"}
+                size={28}
+                color={resetQuantities ? "#4F46E5" : "#9CA3AF"}
+              />
+              <View className="flex-1 ml-3">
+                <Text className="text-base font-semibold text-neutral-900">
+                  Reset all quantities to 0
+                </Text>
+                <Text className="text-sm text-neutral-500 mt-1">
+                  Recommended for price lists. Uncheck to use quantities from file.
+                </Text>
+              </View>
+            </Pressable>
 
             {/* Import Button */}
             <Pressable

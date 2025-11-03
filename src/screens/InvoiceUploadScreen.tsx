@@ -35,6 +35,38 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const addItems = useInventoryStore((s) => s.addItems);
+  const items = useInventoryStore((s) => s.items);
+  const updateItem = useInventoryStore((s) => s.updateItem);
+
+  const autoMergeAndAddInvoiceItems = async (invoiceItems: any[]) => {
+    let addedCount = 0;
+    let mergedCount = 0;
+
+    for (const newItem of invoiceItems) {
+      const normalizedName = newItem.name.toLowerCase().trim();
+
+      // Find existing item with same name
+      const existingItem = items.find(
+        (item) => item.name.toLowerCase().trim() === normalizedName
+      );
+
+      if (existingItem) {
+        // Merge: Add quantity to existing item
+        await updateItem(existingItem.id, {
+          quantity: existingItem.quantity + newItem.quantity,
+          price: newItem.price || existingItem.price, // Update price if provided
+          barcode: newItem.barcode || existingItem.barcode, // Update barcode if provided
+        });
+        mergedCount++;
+      } else {
+        // New item: Add to inventory
+        await addItems([newItem]);
+        addedCount++;
+      }
+    }
+
+    return { addedCount, mergedCount };
+  };
 
   const handleTakePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -151,7 +183,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
     setSelectedItems(newSelection);
   };
 
-  const handleAddToInventory = () => {
+  const handleAddToInventory = async () => {
     if (!parsedInvoice || selectedItems.size === 0) {
       Alert.alert("No Items Selected", "Please select items to add");
       return;
@@ -171,11 +203,21 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
       };
     });
 
-    addItems(itemsToAdd);
+    // Auto-merge and add items
+    const { addedCount, mergedCount } = await autoMergeAndAddInvoiceItems(itemsToAdd);
+
+    let message = "";
+    if (addedCount > 0 && mergedCount > 0) {
+      message = `Added ${addedCount} new items and merged ${mergedCount} with existing items`;
+    } else if (addedCount > 0) {
+      message = `Added ${addedCount} new items`;
+    } else if (mergedCount > 0) {
+      message = `Merged quantities for ${mergedCount} existing items`;
+    }
 
     Alert.alert(
       "Success",
-      `Added ${itemsToAdd.length} items to inventory`,
+      message,
       [
         {
           text: "OK",

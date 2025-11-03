@@ -12,6 +12,7 @@ export default function InventoryScreen({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = React.useState("All");
   const [showOnlyStarred, setShowOnlyStarred] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"all" | "inStock">("inStock");
+  const [selectedSupplier, setSelectedSupplier] = React.useState<string>("All");
 
   // Individual selectors to prevent unnecessary re-renders
   const items = useInventoryStore((s) => s.items);
@@ -19,6 +20,12 @@ export default function InventoryScreen({ navigation }: any) {
   const toggleStarred = useInventoryStore((s) => s.toggleStarred);
   const projects = useTimeTrackerStore((s) => s.projects);
   const company = useAuthStore((s) => s.company);
+
+  // Get unique suppliers from items
+  const suppliers = React.useMemo(() => {
+    const uniqueSuppliers = Array.from(new Set(items.map((item) => item.supplier).filter(Boolean))) as string[];
+    return ["All", ...uniqueSuppliers.sort()];
+  }, [items]);
 
   const handleShowCompanyId = () => {
     if (company) {
@@ -80,7 +87,8 @@ export default function InventoryScreen({ navigation }: any) {
       const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
       const matchesStarred = !showOnlyStarred || item.isStarred;
       const matchesTab = activeTab === "all" || (activeTab === "inStock" && item.quantity > 0);
-      return matchesSearch && matchesCategory && matchesStarred && matchesTab;
+      const matchesSupplier = selectedSupplier === "All" || item.supplier === selectedSupplier;
+      return matchesSearch && matchesCategory && matchesStarred && matchesTab && matchesSupplier;
     });
 
     // Sort: items with quantity > 0 at top, then by quantity descending
@@ -93,7 +101,7 @@ export default function InventoryScreen({ navigation }: any) {
     });
 
     return filtered;
-  }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab]);
+  }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab, selectedSupplier]);
 
 
   // Render item for FlatList - simple, compact list design
@@ -317,6 +325,45 @@ export default function InventoryScreen({ navigation }: any) {
             </Pressable>
           </View>
         </View>
+
+        {/* Supplier Tabs */}
+        {suppliers.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="px-6 mb-4"
+            contentContainerStyle={{ gap: 8 }}
+          >
+            {suppliers.map((supplier) => (
+              <Pressable
+                key={supplier}
+                onPress={() => setSelectedSupplier(supplier)}
+                className={`px-4 py-2 rounded-full ${
+                  selectedSupplier === supplier
+                    ? "bg-purple-600"
+                    : "bg-white"
+                }`}
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              >
+                <Text
+                  className={`font-medium ${
+                    selectedSupplier === supplier
+                      ? "text-white"
+                      : "text-neutral-700"
+                  }`}
+                >
+                  {supplier}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Search Bar */}
         <View className="px-6 mb-4">

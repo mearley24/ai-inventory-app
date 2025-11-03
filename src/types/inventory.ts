@@ -12,6 +12,7 @@ export interface InventoryItem {
   lowStockThreshold?: number;
   isStarred?: boolean; // Favorite/everyday items
   assignedProjectId?: string; // Project assignment
+  supplier?: string; // Supplier/source (e.g., "SnapAV", "Adorama", etc.)
   createdAt: number;
   updatedAt: number;
 }

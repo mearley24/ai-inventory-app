@@ -216,9 +216,14 @@ export const useInventoryStore = create<InventoryState>()(
         const items = get().items;
         const groupedByName: { [key: string]: InventoryItem[] } = {};
 
-        // Group items by normalized name
+        // Group items by aggressively normalized name
         items.forEach((item) => {
-          const normalizedName = item.name.toLowerCase().trim();
+          // Remove all spaces, special chars, convert to lowercase
+          const normalizedName = item.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "")
+            .trim();
+
           if (!groupedByName[normalizedName]) {
             groupedByName[normalizedName] = [];
           }

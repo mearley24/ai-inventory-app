@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -15,6 +15,7 @@ export default function ImportScreen({ navigation }: any) {
   const [processingMessage, setProcessingMessage] = React.useState("");
   const [importResult, setImportResult] = React.useState<{ success: number; failed: number; merged: number } | null>(null);
   const [resetQuantities, setResetQuantities] = React.useState(true);
+  const [supplierName, setSupplierName] = React.useState("SnapAV");
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
   const updateItem = useInventoryStore((s) => s.updateItem);
@@ -183,6 +184,7 @@ export default function ImportScreen({ navigation }: any) {
         const itemToAdd = {
           ...newItem,
           quantity: resetQuantities ? 0 : (newItem.quantity || 0),
+          supplier: supplierName, // Add supplier field
         };
         await addItems([itemToAdd]);
         successCount++;
@@ -331,7 +333,7 @@ export default function ImportScreen({ navigation }: any) {
             {/* Reset Quantities Checkbox */}
             <Pressable
               onPress={() => setResetQuantities(!resetQuantities)}
-              className="bg-white rounded-2xl p-4 mb-6 flex-row items-center"
+              className="bg-white rounded-2xl p-4 mb-4 flex-row items-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 2 },
@@ -354,6 +356,29 @@ export default function ImportScreen({ navigation }: any) {
                 </Text>
               </View>
             </Pressable>
+
+            {/* Supplier Name Input */}
+            <View className="bg-white rounded-2xl p-4 mb-6" style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              elevation: 2,
+            }}>
+              <Text className="text-base font-semibold text-neutral-900 mb-2">
+                Supplier Name
+              </Text>
+              <TextInput
+                className="bg-neutral-50 rounded-xl px-4 py-3 text-base text-neutral-900"
+                placeholder="e.g., SnapAV, Adorama, etc."
+                placeholderTextColor="#9CA3AF"
+                value={supplierName}
+                onChangeText={setSupplierName}
+              />
+              <Text className="text-sm text-neutral-500 mt-2">
+                This will be used to organize and filter items by supplier
+              </Text>
+            </View>
 
             {/* Import Button */}
             <Pressable

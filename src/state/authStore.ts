@@ -57,6 +57,56 @@ export const useAuthStore = create<AuthState>()(
       setError: (error) => set({ error }),
 
       initializeAuth: () => {
+        // Check if we have cached auth data in AsyncStorage first
+        const cachedAuth = get();
+        if (cachedAuth.user && cachedAuth.isAuthenticated) {
+          console.log("Using cached auth data (offline mode)");
+          set({ loading: false });
+
+          // Initialize stores with cached data
+          if (cachedAuth.user.companyId) {
+            useInventoryStore.getState().initializeSync(cachedAuth.user.companyId);
+          }
+          if (cachedAuth.user.uid && cachedAuth.user.companyId) {
+            usePasswordVaultStore.getState().initializeSync(cachedAuth.user.uid, cachedAuth.user.companyId);
+            useInvoiceMetadataStore.getState().initializeSync(cachedAuth.user.companyId);
+          }
+
+          // Try to sync with Firebase in background (will fail silently if offline)
+          setTimeout(() => {
+            try {
+              onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+                if (firebaseUser && get().isAuthenticated) {
+                  console.log("Firebase auth synced in background");
+                  // Already authenticated with cached data, just update if needed
+                  try {
+                    const userDoc = await getDoc(doc(firestore, "users", firebaseUser.uid));
+                    if (userDoc.exists()) {
+                      const userData = userDoc.data() as User;
+                      set({ user: userData });
+
+                      if (userData.companyId) {
+                        const companyDoc = await getDoc(doc(firestore, "companies", userData.companyId));
+                        if (companyDoc.exists()) {
+                          set({ company: companyDoc.data() as Company });
+                        }
+                      }
+                    }
+                  } catch (error) {
+                    console.log("Offline: Could not sync with Firebase (using cached data)");
+                  }
+                }
+              });
+            } catch (error) {
+              console.log("Firebase unavailable (offline mode) - using cached auth");
+            }
+          }, 100);
+
+          return;
+        }
+
+        // No cached auth - try Firebase (online mode)
+        console.log("No cached auth - checking Firebase");
         onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
           if (firebaseUser) {
             try {

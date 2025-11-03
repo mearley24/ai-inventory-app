@@ -15,7 +15,8 @@ export default function ImportScreen({ navigation }: any) {
   const [processingMessage, setProcessingMessage] = React.useState("");
   const [importResult, setImportResult] = React.useState<{ success: number; failed: number; merged: number } | null>(null);
   const [resetQuantities, setResetQuantities] = React.useState(true);
-  const [supplierName, setSupplierName] = React.useState("SnapAV");
+  const [supplierName, setSupplierName] = React.useState("");
+  const [showSupplierPrompt, setShowSupplierPrompt] = React.useState(false);
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
   const updateItem = useInventoryStore((s) => s.updateItem);
@@ -195,6 +196,12 @@ export default function ImportScreen({ navigation }: any) {
   };
 
   const handleImport = async () => {
+    // First, ask for supplier name
+    if (!supplierName.trim()) {
+      setShowSupplierPrompt(true);
+      return;
+    }
+
     try {
       setImporting(true);
       setImportResult(null);
@@ -330,6 +337,41 @@ export default function ImportScreen({ navigation }: any) {
               </Animated.View>
             )}
 
+            {/* Supplier Name Input - Required */}
+            <View className="bg-white rounded-2xl p-4 mb-4" style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              elevation: 2,
+              borderWidth: showSupplierPrompt && !supplierName ? 2 : 0,
+              borderColor: "#EF4444",
+            }}>
+              <Text className="text-base font-semibold text-neutral-900 mb-2">
+                Supplier Name <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="bg-neutral-50 rounded-xl px-4 py-3 text-base text-neutral-900"
+                placeholder="e.g., SnapAV, Adorama, B&H Photo, etc."
+                placeholderTextColor="#9CA3AF"
+                value={supplierName}
+                onChangeText={(text) => {
+                  setSupplierName(text);
+                  setShowSupplierPrompt(false);
+                }}
+              />
+              {showSupplierPrompt && !supplierName && (
+                <Text className="text-sm text-red-500 mt-2">
+                  Please enter a supplier name before importing
+                </Text>
+              )}
+              {supplierName && (
+                <Text className="text-sm text-neutral-500 mt-2">
+                  Items will be tagged with &quot;{supplierName}&quot; for easy filtering
+                </Text>
+              )}
+            </View>
+
             {/* Reset Quantities Checkbox */}
             <Pressable
               onPress={() => setResetQuantities(!resetQuantities)}
@@ -356,29 +398,6 @@ export default function ImportScreen({ navigation }: any) {
                 </Text>
               </View>
             </Pressable>
-
-            {/* Supplier Name Input */}
-            <View className="bg-white rounded-2xl p-4 mb-6" style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.06,
-              shadowRadius: 8,
-              elevation: 2,
-            }}>
-              <Text className="text-base font-semibold text-neutral-900 mb-2">
-                Supplier Name
-              </Text>
-              <TextInput
-                className="bg-neutral-50 rounded-xl px-4 py-3 text-base text-neutral-900"
-                placeholder="e.g., SnapAV, Adorama, etc."
-                placeholderTextColor="#9CA3AF"
-                value={supplierName}
-                onChangeText={setSupplierName}
-              />
-              <Text className="text-sm text-neutral-500 mt-2">
-                This will be used to organize and filter items by supplier
-              </Text>
-            </View>
 
             {/* Import Button */}
             <Pressable

@@ -164,9 +164,16 @@ export default function InventoryScreen({ navigation }: any) {
           <Text className="text-base font-semibold text-neutral-900" numberOfLines={1}>
             {item.isStarred ? "⭐ " : ""}{lowStock ? "⚠️ " : ""}{item.name}
           </Text>
-          <Text className="text-xs text-neutral-600 mt-0.5" numberOfLines={1}>
-            {item.supplier && `${item.supplier} • `}{item.category} • Qty: {item.quantity}{item.price && ` • $${item.price.toFixed(2)}`}{item.location && ` • 📍${item.location}`}
-          </Text>
+          <View className="flex-row items-center mt-0.5">
+            {item.supplier && (
+              <Text className="text-xs font-bold text-purple-600 mr-1">
+                [{item.supplier}]
+              </Text>
+            )}
+            <Text className="text-xs text-neutral-600" numberOfLines={1}>
+              {item.category} • Qty: {item.quantity}{item.price && ` • $${item.price.toFixed(2)}`}{item.location && ` • 📍${item.location}`}
+            </Text>
+          </View>
         </View>
 
         {/* Action Buttons */}

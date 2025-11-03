@@ -319,10 +319,13 @@ export default function RecategorizeScreen({ navigation, route }: Props) {
             >
               <Ionicons name="refresh" size={32} color="#8b5cf6" />
               <Text className="text-purple-600 text-lg font-semibold mt-2">
-                Auto-Recategorize All
+                {selectedItemIds ? `Recategorize ${itemsToProcess.length} Selected Items` : "Auto-Recategorize All"}
               </Text>
               <Text className="text-gray-600 text-sm mt-1">
-                Runs in background - you can continue using the app!
+                {selectedItemIds
+                  ? `Process only the ${itemsToProcess.length} items you selected`
+                  : `Process all ${itemsToProcess.length} items - keep app open!`
+                }
               </Text>
             </Pressable>
           )}

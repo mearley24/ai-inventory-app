@@ -158,6 +158,8 @@ export async function executeJob(
       cancellationToken
     );
 
+    console.log(`📊 Recategorization complete: ${changes.length} changes detected`);
+
     // Mark as completed
     await updateJob(jobId, {
       status: "completed",
@@ -166,10 +168,13 @@ export async function executeJob(
       changes,
     });
 
+    console.log(`✅ Job marked as completed with ${changes.length} changes`);
+
     if (onProgress) {
       const updatedJobs = await getJobs();
       const completedJob = updatedJobs.find((j) => j.id === jobId);
       if (completedJob) {
+        console.log(`📢 Notifying progress callback of completion`);
         onProgress(completedJob);
       }
     }

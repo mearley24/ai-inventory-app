@@ -67,19 +67,30 @@ export default function RecategorizeScreen({ navigation }: Props) {
 
       if (job.status === "completed") {
         clearInterval(checkInterval);
+        console.log(`🎉 Job completed! Found ${job.changes.length} changes to apply`);
 
         // Apply changes to inventory
         if (job.changes.length > 0) {
+          console.log("Applying changes to inventory...");
           const updates = job.changes.map((r) => ({
             id: r.id,
             category: r.newCategory,
             subcategory: r.newSubcategory,
           }));
-          bulkUpdateCategories(updates);
+
+          await bulkUpdateCategories(updates);
+          console.log("✅ Changes applied successfully!");
 
           Alert.alert(
             "Complete!",
             `Successfully recategorized ${job.changes.length} items with categories and subcategories.`,
+            [{ text: "OK" }]
+          );
+        } else {
+          console.log("⚠️ No changes to apply");
+          Alert.alert(
+            "Complete!",
+            "Recategorization completed, but no changes were needed.",
             [{ text: "OK" }]
           );
         }
@@ -89,6 +100,8 @@ export default function RecategorizeScreen({ navigation }: Props) {
           "Error",
           job.error || "Recategorization failed. Please try again."
         );
+      } else if (job.status === "cancelled") {
+        clearInterval(checkInterval);
       }
     }, 1000); // Check every second
 

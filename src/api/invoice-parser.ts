@@ -73,7 +73,7 @@ export async function parseInvoiceImage(
 
     console.log("Base64 length:", base64Image.length);
 
-    // Call OpenAI Vision API
+    // Call OpenAI Vision API (using gpt-4o-mini for faster processing)
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -81,7 +81,7 @@ export async function parseInvoiceImage(
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -107,7 +107,7 @@ export async function parseInvoiceImage(
         ],
         response_format: { type: "json_object" },
         temperature: 0.0,
-        max_tokens: 4096,
+        max_tokens: 2048,
       }),
     });
 
@@ -156,12 +156,12 @@ export async function parseInvoicePDF(pdfUri: string): Promise<ParsedInvoice> {
 
     console.log("PDF base64 length:", base64PDF.length);
 
-    // Use Claude API which supports PDFs natively
+    // Use Claude API which supports PDFs natively (using Haiku for faster processing)
     const anthropic = getAnthropicClient();
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
+      model: "claude-3-5-haiku-20241022",
+      max_tokens: 2048,
       messages: [
         {
           role: "user",

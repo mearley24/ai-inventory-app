@@ -330,6 +330,51 @@ export default function RecategorizeScreen({ navigation, route }: Props) {
             )}
           </View>
 
+          {/* Completed Job - Show Apply Button */}
+          {activeJob && activeJob.status === "completed" && (
+            <View className="bg-green-100 rounded-2xl p-6 items-center mb-4">
+              <Ionicons name="checkmark-circle" size={64} color="#10B981" />
+              <Text className="text-green-800 text-lg font-semibold mt-4">
+                Completed!
+              </Text>
+              <Text className="text-green-700 text-sm mt-2 text-center">
+                {activeJob.changes.length} items have been recategorized.
+              </Text>
+              <Pressable
+                onPress={async () => {
+                  if (activeJob.changes.length > 0) {
+                    console.log("Manually applying changes...");
+                    const updates = activeJob.changes.map((r) => ({
+                      id: r.id,
+                      category: r.newCategory,
+                      subcategory: r.newSubcategory,
+                    }));
+                    await bulkUpdateCategories(updates);
+                    console.log("✅ Changes applied!");
+                    Alert.alert(
+                      "Success!",
+                      `Applied ${activeJob.changes.length} category changes to your inventory.`,
+                      [
+                        {
+                          text: "OK",
+                          onPress: () => {
+                            setActiveJob(null);
+                            navigation.goBack();
+                          }
+                        }
+                      ]
+                    );
+                  }
+                }}
+                className="bg-green-600 rounded-xl px-6 py-3 mt-4"
+              >
+                <Text className="text-white font-semibold">
+                  Apply Changes to Inventory
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
           {/* Start Button */}
           {!activeJob && (
             <Pressable

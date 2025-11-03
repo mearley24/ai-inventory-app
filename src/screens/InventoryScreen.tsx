@@ -96,71 +96,40 @@ export default function InventoryScreen({ navigation }: any) {
   }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab]);
 
 
-  // Render item for FlatList - memoized for performance
-  const renderItem = React.useCallback(({ item, index }: { item: InventoryItem; index: number }) => {
-    const assignedProject = projects.find(p => p.id === item.assignedProjectId);
+  // Render item for FlatList - simple, compact list design
+  const renderItem = React.useCallback(({ item }: { item: InventoryItem }) => {
     const lowStock = item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
 
     return (
-    <View>
       <Pressable
         onPress={() => navigation.navigate("EditItem", { item })}
-        className="bg-white rounded-2xl p-4 mb-3 mx-6 flex-row items-center"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-          elevation: 2,
-        }}
+        className="bg-white border-b border-neutral-200 px-4 py-3 flex-row items-center"
       >
-        {/* Icon */}
-        <View
-          className={`w-12 h-12 rounded-full items-center justify-center ${
-            lowStock ? "bg-amber-100" : "bg-indigo-100"
-          }`}
-        >
-          <Ionicons
-            name={lowStock ? "warning" : "cube"}
-            size={24}
-            color={lowStock ? "#F59E0B" : "#4F46E5"}
-          />
-        </View>
-
         {/* Content */}
-        <View className="flex-1 ml-4">
-          <View className="flex-row items-center">
-            <Text className="text-lg font-semibold text-neutral-900 flex-1">
+        <View className="flex-1">
+          <View className="flex-row items-center mb-1">
+            {item.isStarred && (
+              <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 6 }} />
+            )}
+            {lowStock && (
+              <Ionicons name="warning" size={14} color="#F59E0B" style={{ marginRight: 6 }} />
+            )}
+            <Text className="text-base font-semibold text-neutral-900 flex-1" numberOfLines={1}>
               {item.name}
             </Text>
-            {item.isStarred && (
-              <Ionicons name="star" size={18} color="#F59E0B" />
-            )}
           </View>
-          <View className="flex-row items-center mt-1 flex-wrap">
-            <View className="bg-neutral-100 rounded-full px-2 py-1 mr-2">
-              <Text className="text-xs font-medium text-neutral-600">
-                {item.category}
-              </Text>
-            </View>
-            {assignedProject && (
-              <View
-                className="rounded-full px-2 py-1 mr-2 flex-row items-center"
-                style={{ backgroundColor: assignedProject.color + "20" }}
-              >
-                <Ionicons name="briefcase" size={10} color={assignedProject.color} />
-                <Text className="text-xs font-medium ml-1" style={{ color: assignedProject.color }}>
-                  {assignedProject.name}
-                </Text>
-              </View>
-            )}
-            <Text className="text-sm text-neutral-500">
+          <View className="flex-row items-center">
+            <Text className="text-xs text-neutral-500 mr-2">
+              {item.category}
+            </Text>
+            <Text className="text-xs text-neutral-400 mr-1">•</Text>
+            <Text className="text-xs text-neutral-600 font-medium">
               Qty: {item.quantity}
             </Text>
             {item.price && (
               <>
-                <Text className="text-sm text-neutral-400 mx-1">•</Text>
-                <Text className="text-sm font-semibold text-indigo-600">
+                <Text className="text-xs text-neutral-400 mx-1">•</Text>
+                <Text className="text-xs font-semibold text-indigo-600">
                   ${item.price.toFixed(2)}
                 </Text>
               </>
@@ -168,35 +137,33 @@ export default function InventoryScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Star Button */}
+        {/* Action Buttons */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
             toggleStarred(item.id);
           }}
-          className="w-10 h-10 items-center justify-center"
+          className="w-8 h-8 items-center justify-center ml-2"
         >
           <Ionicons
             name={item.isStarred ? "star" : "star-outline"}
-            size={24}
+            size={20}
             color="#F59E0B"
           />
         </Pressable>
 
-        {/* Delete Button */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation();
             deleteItem(item.id);
           }}
-          className="w-10 h-10 items-center justify-center"
+          className="w-8 h-8 items-center justify-center"
         >
-          <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          <Ionicons name="trash-outline" size={18} color="#EF4444" />
         </Pressable>
       </Pressable>
-    </View>
     );
-  }, [navigation, toggleStarred, deleteItem, projects]);
+  }, [navigation, toggleStarred, deleteItem]);
 
   const ListEmptyComponent = React.useCallback(() => (
     <View className="items-center justify-center py-20 px-6">
@@ -213,8 +180,8 @@ export default function InventoryScreen({ navigation }: any) {
   // Add getItemLayout for better FlatList performance
   const getItemLayout = React.useCallback(
     (_: any, index: number) => ({
-      length: 96, // approximate height of item (p-4 mb-3 = ~96px)
-      offset: 96 * index,
+      length: 64, // compact height (py-3 = ~64px)
+      offset: 64 * index,
       index,
     }),
     []
@@ -465,10 +432,10 @@ export default function InventoryScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          updateCellsBatchingPeriod={100}
-          initialNumToRender={10}
-          windowSize={5}
+          maxToRenderPerBatch={20}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={20}
+          windowSize={10}
         />
 
         {/* Floating Add Button */}

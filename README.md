@@ -115,27 +115,36 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 
 ## Performance Optimizations ⚡ NEW!
 
-The app has been optimized for smooth, fast performance across all screens:
+The app has been optimized for maximum speed and responsiveness:
 
-**Rendering Improvements:**
-- **FlatList virtualization** - Only renders visible items, greatly improves scrolling
-- **Removed heavy animations** - Eliminated FadeInDown on every list item
-- **Optimized rendering** - Reduced batch sizes and window sizes for better memory usage
-- **React.memo callbacks** - Prevents unnecessary re-renders of list items
+**Ultra-Fast List Design:**
+- **Compact list layout** - Simple borders instead of cards with shadows
+- **No animations** - Instant rendering without fade/scale effects
+- **Smaller item height** - 64px per item (down from 96px) = more items visible
+- **Efficient layout** - Border separators instead of cards with margins
+- **Text truncation** - `numberOfLines={1}` prevents layout thrashing
+
+**FlatList Performance:**
+- **Optimized virtualization** - Renders 20 items at a time (up from 10)
+- `removeClippedSubviews={true}` - Unmounts off-screen components
+- `getItemLayout` - Pre-calculated heights for instant scrolling
+- `maxToRenderPerBatch={20}` - Larger batches for smoother scrolling
+- `windowSize={10}` - Keeps more items in memory
+- `updateCellsBatchingPeriod={50}` - Fast update throttling
 
 **State Management:**
 - **Individual Zustand selectors** - Prevents re-render cascades
 - **Memoized computations** - Expensive filters/sorts only run when data changes
-- **Optimized dependencies** - Reduced unnecessary useEffect and useMemo triggers
+- **Optimized dependencies** - Reduced unnecessary useEffect triggers
+- **No expensive lookups** - Removed project lookups from render loop
 
-**Settings Applied:**
-- `removeClippedSubviews={true}` - Unmounts off-screen components
-- `maxToRenderPerBatch={10}` - Renders 10 items at a time
-- `initialNumToRender={10}` - Shows 10 items on mount
-- `windowSize={5}` - Keeps 5 viewports of items in memory
-- `updateCellsBatchingPeriod={100}` - Throttles updates for smoother scrolling
+**Visual Optimizations:**
+- Removed rounded corners and shadows (expensive to render)
+- Inline icons instead of background circles
+- Simple border-based separators
+- Reduced padding and margins
 
-These optimizations make the app significantly faster, especially with large inventories (100+ items).
+These optimizations make scrolling through 1000+ items buttery smooth.
 
 ## Project Structure
 

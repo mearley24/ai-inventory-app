@@ -362,17 +362,17 @@ export default function InventoryScreen({ navigation }: any) {
           <View className="flex-row bg-white rounded-xl p-1 shadow-sm">
             <Pressable
               onPress={() => setActiveTab("inStock")}
-              className={`flex-1 py-2 rounded-lg ${activeTab === "inStock" ? "bg-indigo-600" : "bg-transparent"}`}
+              className={`flex-1 py-2.5 rounded-lg ${activeTab === "inStock" ? "bg-indigo-600" : "bg-transparent"}`}
             >
-              <Text className={`text-center font-semibold ${activeTab === "inStock" ? "text-white" : "text-neutral-600"}`}>
+              <Text className={`text-center font-semibold text-sm ${activeTab === "inStock" ? "text-white" : "text-neutral-600"}`}>
                 In Stock ({inStockCount})
               </Text>
             </Pressable>
             <Pressable
               onPress={() => setActiveTab("all")}
-              className={`flex-1 py-2 rounded-lg ${activeTab === "all" ? "bg-indigo-600" : "bg-transparent"}`}
+              className={`flex-1 py-2.5 rounded-lg ${activeTab === "all" ? "bg-indigo-600" : "bg-transparent"}`}
             >
-              <Text className={`text-center font-semibold ${activeTab === "all" ? "text-white" : "text-neutral-600"}`}>
+              <Text className={`text-center font-semibold text-sm ${activeTab === "all" ? "text-white" : "text-neutral-600"}`}>
                 All Items ({items.length})
               </Text>
             </Pressable>

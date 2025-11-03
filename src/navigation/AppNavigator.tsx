@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { View } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 
 import InventoryScreen from "../screens/InventoryScreen";
 import ScannerScreen from "../screens/ScannerScreen";
@@ -117,11 +117,42 @@ function TabNavigator() {
 
 export default function AppNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const loading = useAuthStore((s) => s.loading);
   const initializeAuth = useAuthStore((s) => s.initializeAuth);
 
   React.useEffect(() => {
     initializeAuth();
   }, []);
+
+  // Show loading screen while auth is initializing
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#FAFAFA" }}>
+        <View style={{ alignItems: "center" }}>
+          <View style={{
+            width: 80,
+            height: 80,
+            borderRadius: 24,
+            backgroundColor: "#4F46E5",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 24
+          }}>
+            <Ionicons name="cube" size={40} color="white" />
+          </View>
+          <ActivityIndicator size="large" color="#4F46E5" />
+          <Text style={{
+            marginTop: 16,
+            fontSize: 16,
+            color: "#6B7280",
+            fontWeight: "600"
+          }}>
+            Loading...
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator

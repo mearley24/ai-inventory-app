@@ -57,10 +57,19 @@ export const useAuthStore = create<AuthState>()(
       setError: (error) => set({ error }),
 
       initializeAuth: () => {
+        // Set a timeout to prevent infinite loading
+        const timeout = setTimeout(() => {
+          console.log("Auth initialization timeout - setting loading to false");
+          if (get().loading) {
+            set({ loading: false, isAuthenticated: false });
+          }
+        }, 5000); // 5 second timeout
+
         // Check if we have cached auth data in AsyncStorage first
         const cachedAuth = get();
         if (cachedAuth.user && cachedAuth.isAuthenticated) {
           console.log("Using cached auth data (offline mode)");
+          clearTimeout(timeout);
           set({ loading: false });
 
           // Initialize stores with cached data
@@ -107,52 +116,59 @@ export const useAuthStore = create<AuthState>()(
 
         // No cached auth - try Firebase (online mode)
         console.log("No cached auth - checking Firebase");
-        onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-          if (firebaseUser) {
-            try {
-              // Fetch user data from Firestore
-              const userDoc = await getDoc(doc(firestore, "users", firebaseUser.uid));
+        try {
+          onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+            clearTimeout(timeout);
+            if (firebaseUser) {
+              try {
+                // Fetch user data from Firestore
+                const userDoc = await getDoc(doc(firestore, "users", firebaseUser.uid));
 
-              if (userDoc.exists()) {
-                const userData = userDoc.data() as User;
-                set({ user: userData, isAuthenticated: true, loading: false });
+                if (userDoc.exists()) {
+                  const userData = userDoc.data() as User;
+                  set({ user: userData, isAuthenticated: true, loading: false });
 
-                // Fetch company data
-                if (userData.companyId) {
-                  const companyDoc = await getDoc(doc(firestore, "companies", userData.companyId));
-                  if (companyDoc.exists()) {
-                    set({ company: companyDoc.data() as Company });
+                  // Fetch company data
+                  if (userData.companyId) {
+                    const companyDoc = await getDoc(doc(firestore, "companies", userData.companyId));
+                    if (companyDoc.exists()) {
+                      set({ company: companyDoc.data() as Company });
+                    }
                   }
+
+                  // Initialize password vault sync
+                  usePasswordVaultStore.getState().initializeSync(userData.uid, userData.companyId);
+
+                  // Initialize inventory sync
+                  useInventoryStore.getState().initializeSync(userData.companyId);
+
+                  // Initialize invoice metadata sync
+                  useInvoiceMetadataStore.getState().initializeSync(userData.companyId);
+                } else {
+                  set({ user: null, company: null, isAuthenticated: false, loading: false });
                 }
-
-                // Initialize password vault sync
-                usePasswordVaultStore.getState().initializeSync(userData.uid, userData.companyId);
-
-                // Initialize inventory sync
-                useInventoryStore.getState().initializeSync(userData.companyId);
-
-                // Initialize invoice metadata sync
-                useInvoiceMetadataStore.getState().initializeSync(userData.companyId);
-              } else {
-                set({ user: null, company: null, isAuthenticated: false, loading: false });
+              } catch (error: any) {
+                console.error("Error fetching user data:", error);
+                set({ error: error.message, loading: false, isAuthenticated: false });
               }
-            } catch (error: any) {
-              console.error("Error fetching user data:", error);
-              set({ error: error.message, loading: false });
+            } else {
+              // Stop password vault sync when user signs out
+              usePasswordVaultStore.getState().stopSync();
+
+              // Stop inventory sync when user signs out
+              useInventoryStore.getState().stopSync();
+
+              // Stop invoice metadata sync when user signs out
+              useInvoiceMetadataStore.getState().stopSync();
+
+              set({ user: null, company: null, isAuthenticated: false, loading: false });
             }
-          } else {
-            // Stop password vault sync when user signs out
-            usePasswordVaultStore.getState().stopSync();
-
-            // Stop inventory sync when user signs out
-            useInventoryStore.getState().stopSync();
-
-            // Stop invoice metadata sync when user signs out
-            useInvoiceMetadataStore.getState().stopSync();
-
-            set({ user: null, company: null, isAuthenticated: false, loading: false });
-          }
-        });
+          });
+        } catch (error) {
+          console.error("Error initializing Firebase auth:", error);
+          clearTimeout(timeout);
+          set({ loading: false, isAuthenticated: false });
+        }
       },
 
       signIn: async (email: string, password: string) => {

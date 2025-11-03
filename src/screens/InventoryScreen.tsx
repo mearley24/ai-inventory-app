@@ -264,11 +264,11 @@ export default function InventoryScreen({ navigation }: any) {
             )}
           </View>
 
-          {/* Upload Options Row */}
+          {/* Upload Options - All in one row with smaller text */}
           <View className="flex-row gap-2 mb-3">
             <Pressable
               onPress={() => navigation.navigate("DToolsImport")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -277,12 +277,12 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="construct" size={20} color="#10B981" />
-              <Text className="text-emerald-600 font-semibold ml-2">D-Tools</Text>
+              <Ionicons name="construct" size={24} color="#10B981" />
+              <Text className="text-emerald-600 font-semibold text-xs mt-1">D-Tools</Text>
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("Import")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -291,12 +291,12 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="cloud-upload" size={20} color="#4F46E5" />
-              <Text className="text-indigo-600 font-semibold ml-2">CSV</Text>
+              <Ionicons name="cloud-upload" size={24} color="#4F46E5" />
+              <Text className="text-indigo-600 font-semibold text-xs mt-1">CSV Import</Text>
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("InvoiceUpload")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -305,16 +305,16 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="receipt" size={20} color="#7C3AED" />
-              <Text className="text-purple-600 font-semibold ml-2">Invoice</Text>
+              <Ionicons name="receipt" size={24} color="#7C3AED" />
+              <Text className="text-purple-600 font-semibold text-xs mt-1">Invoice</Text>
             </Pressable>
           </View>
 
-          {/* Secondary Actions Row */}
+          {/* Folder Actions Row */}
           <View className="flex-row gap-2 mb-3">
             <Pressable
               onPress={() => navigation.navigate("InvoiceFolder")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -323,12 +323,12 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="folder" size={20} color="#DB2777" />
-              <Text className="text-pink-600 font-semibold ml-2">Invoice Folder</Text>
+              <Ionicons name="folder" size={24} color="#DB2777" />
+              <Text className="text-pink-600 font-semibold text-xs mt-1">Invoice Folder</Text>
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("DToolsFolder")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -337,16 +337,12 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="folder-open" size={20} color="#10B981" />
-              <Text className="text-emerald-600 font-semibold ml-2">D-Tools Folder</Text>
+              <Ionicons name="folder-open" size={24} color="#10B981" />
+              <Text className="text-emerald-600 font-semibold text-xs mt-1">D-Tools Folder</Text>
             </Pressable>
-          </View>
-
-          {/* Third Actions Row */}
-          <View className="flex-row gap-2 mb-3">
             <Pressable
               onPress={() => navigation.navigate("Recategorize")}
-              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
@@ -355,8 +351,8 @@ export default function InventoryScreen({ navigation }: any) {
                 elevation: 1,
               }}
             >
-              <Ionicons name="sparkles" size={20} color="#14B8A6" />
-              <Text className="text-teal-700 font-semibold ml-2">AI Categorize</Text>
+              <Ionicons name="sparkles" size={24} color="#14B8A6" />
+              <Text className="text-teal-700 font-semibold text-xs mt-1">AI Categorize</Text>
             </Pressable>
           </View>
         </View>

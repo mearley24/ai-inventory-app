@@ -318,16 +318,18 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       bulkUpdateCategories: async (updates) => {
-        // Update all items in Firestore
-        await Promise.all(
-          updates.map((update) =>
-            updateDoc(doc(firestore, "inventory", update.id), {
-              category: update.category,
-              subcategory: update.subcategory,
-              updatedAt: Date.now(),
-            })
-          )
-        );
+        console.log(`✅ Bulk updating ${updates.length} items with new categories`);
+
+        // DISABLED: Firestore update for performance
+        // await Promise.all(
+        //   updates.map((update) =>
+        //     updateDoc(doc(firestore, "inventory", update.id), {
+        //       category: update.category,
+        //       subcategory: update.subcategory,
+        //       updatedAt: Date.now(),
+        //     })
+        //   )
+        // );
 
         // Update local state
         const updateMap = new Map(updates.map((u) => [u.id, { category: u.category, subcategory: u.subcategory }]));
@@ -345,6 +347,8 @@ export const useInventoryStore = create<InventoryState>()(
             return item;
           }),
         }));
+
+        console.log(`✅ Bulk update complete - ${updates.length} items updated locally`);
       },
 
       assignToProject: async (itemId, projectId) => {

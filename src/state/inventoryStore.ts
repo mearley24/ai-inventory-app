@@ -74,12 +74,7 @@ export const useInventoryStore = create<InventoryState>()(
           }));
         }
 
-        // DISABLED: Real-time sync disabled for wipe
-        console.log("Real-time sync DISABLED for data wipe");
-        set({ unsubscribe: null, currentCompanyId: companyId, items: [] });
-
-        /* ORIGINAL CODE - COMMENTED OUT FOR WIPE
-        // Set up real-time listener
+        // Set up real-time listener with offline support
         const itemsRef = collection(firestore, "inventory");
         const q = query(itemsRef, where("companyId", "==", companyId));
 
@@ -92,7 +87,6 @@ export const useInventoryStore = create<InventoryState>()(
         });
 
         set({ unsubscribe, currentCompanyId: companyId });
-        */
       },
 
       stopSync: () => {
@@ -417,10 +411,10 @@ export const useInventoryStore = create<InventoryState>()(
     {
       name: "inventory-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist non-item data to improve performance
+      // Persist items locally for offline access
       partialize: (state) => ({
+        items: state.items,
         currentCompanyId: state.currentCompanyId,
-        // Don't persist items array - it comes from Firestore
         // Don't persist unsubscribe function
       }),
     }

@@ -381,89 +381,97 @@ export default function InventoryScreen({ navigation }: any) {
 
         {/* Supplier Tabs */}
         {suppliers.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ paddingHorizontal: 24, marginBottom: 16 }}
-            contentContainerStyle={{ gap: 12, paddingRight: 24 }}
-          >
-            {suppliers.map((supplier) => (
-              <Pressable
-                key={supplier}
-                onPress={() => setSelectedSupplier(supplier)}
-                style={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 14,
-                  borderRadius: 25,
-                  backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#FFFFFF",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 2,
-                  elevation: 1,
-                  minWidth: 100,
-                }}
-              >
-                <Text
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+              SUPPLIER
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 12 }}
+            >
+              {suppliers.map((supplier) => (
+                <Pressable
+                  key={supplier}
+                  onPress={() => setSelectedSupplier(supplier)}
                   style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: selectedSupplier === supplier ? "#FFFFFF" : "#374151",
-                    textAlign: "center",
+                    paddingHorizontal: 28,
+                    paddingVertical: 16,
+                    borderRadius: 30,
+                    backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#FFFFFF",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                    minWidth: 120,
                   }}
                 >
-                  {supplier}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: "700",
+                      color: selectedSupplier === supplier ? "#FFFFFF" : "#374151",
+                      textAlign: "center",
+                    }}
+                  >
+                    {supplier}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
         )}
 
         {/* Location Tabs */}
         {locations.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ paddingHorizontal: 24, marginBottom: 16 }}
-            contentContainerStyle={{ gap: 12, paddingRight: 24 }}
-          >
-            {locations.map((location) => (
-              <Pressable
-                key={location}
-                onPress={() => setSelectedLocation(location)}
-                style={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 14,
-                  borderRadius: 25,
-                  backgroundColor: selectedLocation === location ? "#059669" : "#FFFFFF",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 2,
-                  elevation: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  minWidth: 110,
-                }}
-              >
-                <Ionicons
-                  name="location"
-                  size={18}
-                  color={selectedLocation === location ? "#FFFFFF" : "#10B981"}
-                  style={{ marginRight: 8 }}
-                />
-                <Text
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+              LOCATION
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 12 }}
+            >
+              {locations.map((location) => (
+                <Pressable
+                  key={location}
+                  onPress={() => setSelectedLocation(location)}
                   style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: selectedLocation === location ? "#FFFFFF" : "#374151",
+                    paddingHorizontal: 28,
+                    paddingVertical: 16,
+                    borderRadius: 30,
+                    backgroundColor: selectedLocation === location ? "#059669" : "#FFFFFF",
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    minWidth: 130,
                   }}
                 >
-                  {location}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                  <Ionicons
+                    name="location"
+                    size={20}
+                    color={selectedLocation === location ? "#FFFFFF" : "#10B981"}
+                    style={{ marginRight: 10 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: "700",
+                      color: selectedLocation === location ? "#FFFFFF" : "#374151",
+                    }}
+                  >
+                    {location}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
         )}
 
         {/* Search Bar */}
@@ -522,42 +530,46 @@ export default function InventoryScreen({ navigation }: any) {
         </View>
 
         {/* Category Filter */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ paddingHorizontal: 24, marginBottom: 16 }}
-          contentContainerStyle={{ gap: 12, paddingRight: 24 }}
-        >
-          {categories.map((category) => (
-            <Pressable
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              style={{
-                paddingHorizontal: 24,
-                paddingVertical: 14,
-                borderRadius: 25,
-                backgroundColor: selectedCategory === category ? "#4F46E5" : "#FFFFFF",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-                elevation: 1,
-                minWidth: 90,
-              }}
-            >
-              <Text
+        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+            CATEGORY
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            {categories.map((category) => (
+              <Pressable
+                key={category}
+                onPress={() => setSelectedCategory(category)}
                 style={{
-                  fontSize: 16,
-                  fontWeight: "700",
-                  color: selectedCategory === category ? "#FFFFFF" : "#374151",
-                  textAlign: "center",
+                  paddingHorizontal: 28,
+                  paddingVertical: 16,
+                  borderRadius: 30,
+                  backgroundColor: selectedCategory === category ? "#4F46E5" : "#FFFFFF",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 2,
+                  minWidth: 110,
                 }}
               >
-                {category}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: "700",
+                    color: selectedCategory === category ? "#FFFFFF" : "#374151",
+                    textAlign: "center",
+                  }}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Items List - FlatList for better performance */}
         <FlatList

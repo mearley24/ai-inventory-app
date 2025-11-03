@@ -44,18 +44,26 @@ export default function App() {
       try {
         console.log("=== FORCE WIPING ALL DATA ===");
 
-        // 1. Clear AsyncStorage completely
+        // 1. Stop any Firestore sync first
+        const store = useInventoryStore.getState();
+        store.stopSync();
+        console.log("Firestore sync stopped");
+
+        // 2. Clear AsyncStorage completely
         await AsyncStorage.clear();
         console.log("AsyncStorage cleared");
 
-        // 2. Force clear inventory store
-        const store = useInventoryStore.getState();
+        // 3. Force clear inventory store
         store.items = [];
         await store.clearAll();
         console.log("Inventory store cleared");
 
-        // 3. Force set empty items
+        // 4. Force set empty items multiple times to override any listeners
         useInventoryStore.setState({ items: [] });
+        setTimeout(() => useInventoryStore.setState({ items: [] }), 100);
+        setTimeout(() => useInventoryStore.setState({ items: [] }), 500);
+        setTimeout(() => useInventoryStore.setState({ items: [] }), 1000);
+
         console.log("=== ALL DATA WIPED ===");
       } catch (error) {
         console.error("Error wiping data:", error);

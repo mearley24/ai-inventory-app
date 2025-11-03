@@ -74,6 +74,11 @@ export const useInventoryStore = create<InventoryState>()(
           }));
         }
 
+        // DISABLED: Real-time sync disabled for wipe
+        console.log("Real-time sync DISABLED for data wipe");
+        set({ unsubscribe: null, currentCompanyId: companyId, items: [] });
+
+        /* ORIGINAL CODE - COMMENTED OUT FOR WIPE
         // Set up real-time listener
         const itemsRef = collection(firestore, "inventory");
         const q = query(itemsRef, where("companyId", "==", companyId));
@@ -87,6 +92,7 @@ export const useInventoryStore = create<InventoryState>()(
         });
 
         set({ unsubscribe, currentCompanyId: companyId });
+        */
       },
 
       stopSync: () => {

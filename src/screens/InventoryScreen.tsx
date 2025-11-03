@@ -14,6 +14,8 @@ export default function InventoryScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = React.useState<"all" | "inStock">("inStock");
   const [selectedSupplier, setSelectedSupplier] = React.useState<string>("All");
   const [selectedLocation, setSelectedLocation] = React.useState<string>("All");
+  const [selectionMode, setSelectionMode] = React.useState(false);
+  const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set());
 
   // Individual selectors to prevent unnecessary re-renders
   const items = useInventoryStore((s) => s.items);
@@ -153,12 +155,37 @@ export default function InventoryScreen({ navigation }: any) {
   // Render item for FlatList - simple, compact list design
   const renderItem = React.useCallback(({ item }: { item: InventoryItem }) => {
     const lowStock = item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
+    const isSelected = selectedItems.has(item.id);
 
     return (
       <Pressable
-        onPress={() => navigation.navigate("EditItem", { item })}
-        className="bg-white border-b border-neutral-200 px-4 py-2 flex-row items-center"
+        onPress={() => {
+          if (selectionMode) {
+            const newSelected = new Set(selectedItems);
+            if (isSelected) {
+              newSelected.delete(item.id);
+            } else {
+              newSelected.add(item.id);
+            }
+            setSelectedItems(newSelected);
+          } else {
+            navigation.navigate("EditItem", { item });
+          }
+        }}
+        className={`border-b border-neutral-200 px-4 py-2 flex-row items-center ${
+          isSelected ? "bg-indigo-50" : "bg-white"
+        }`}
       >
+        {/* Checkbox in selection mode */}
+        {selectionMode && (
+          <Ionicons
+            name={isSelected ? "checkbox" : "square-outline"}
+            size={24}
+            color={isSelected ? "#4F46E5" : "#9CA3AF"}
+            style={{ marginRight: 12 }}
+          />
+        )}
+
         {/* Content */}
         <View className="flex-1">
           <Text className="text-base font-semibold text-neutral-900" numberOfLines={1}>
@@ -176,33 +203,37 @@ export default function InventoryScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <Pressable
-          onPress={(e) => {
-            e.stopPropagation();
-            toggleStarred(item.id);
-          }}
-          className="w-8 h-8 items-center justify-center ml-2"
-        >
-          <Ionicons
-            name={item.isStarred ? "star" : "star-outline"}
-            size={20}
-            color="#F59E0B"
-          />
-        </Pressable>
+        {/* Action Buttons - hidden in selection mode */}
+        {!selectionMode && (
+          <>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                toggleStarred(item.id);
+              }}
+              className="w-8 h-8 items-center justify-center ml-2"
+            >
+              <Ionicons
+                name={item.isStarred ? "star" : "star-outline"}
+                size={20}
+                color="#F59E0B"
+              />
+            </Pressable>
 
-        <Pressable
-          onPress={(e) => {
-            e.stopPropagation();
-            deleteItem(item.id);
-          }}
-          className="w-8 h-8 items-center justify-center"
-        >
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
-        </Pressable>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                deleteItem(item.id);
+              }}
+              className="w-8 h-8 items-center justify-center"
+            >
+              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+            </Pressable>
+          </>
+        )}
       </Pressable>
     );
-  }, [navigation, toggleStarred, deleteItem]);
+  }, [navigation, toggleStarred, deleteItem, selectionMode, selectedItems]);
 
   const ListEmptyComponent = React.useCallback(() => (
     <View className="items-center justify-center py-20 px-6">
@@ -341,7 +372,13 @@ export default function InventoryScreen({ navigation }: any) {
               <Text className="text-emerald-600 font-semibold text-xs mt-1">D-Tools Folder</Text>
             </Pressable>
             <Pressable
-              onPress={() => navigation.navigate("Recategorize")}
+              onPress={() => {
+                if (selectionMode && selectedItems.size > 0) {
+                  navigation.navigate("Recategorize", { selectedItemIds: Array.from(selectedItems) });
+                } else {
+                  navigation.navigate("Recategorize");
+                }
+              }}
               className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
               style={{
                 shadowColor: "#000",
@@ -352,8 +389,69 @@ export default function InventoryScreen({ navigation }: any) {
               }}
             >
               <Ionicons name="sparkles" size={24} color="#14B8A6" />
-              <Text className="text-teal-700 font-semibold text-xs mt-1">AI Categorize</Text>
+              <Text className="text-teal-700 font-semibold text-xs mt-1">
+                {selectionMode && selectedItems.size > 0 ? `AI (${selectedItems.size})` : "AI Categorize"}
+              </Text>
             </Pressable>
+          </View>
+
+          {/* Selection Mode Row */}
+          <View className="flex-row gap-2 mb-3">
+            <Pressable
+              onPress={() => {
+                setSelectionMode(!selectionMode);
+                setSelectedItems(new Set());
+              }}
+              className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+                backgroundColor: selectionMode ? "#EEF2FF" : "#FFFFFF",
+              }}
+            >
+              <Ionicons name={selectionMode ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color="#4F46E5" />
+              <Text className="text-indigo-600 font-semibold text-xs mt-1">
+                {selectionMode ? `Selected (${selectedItems.size})` : "Select Items"}
+              </Text>
+            </Pressable>
+            {selectionMode && (
+              <>
+                <Pressable
+                  onPress={() => {
+                    const allFiltered = filteredItems.map(item => item.id);
+                    setSelectedItems(new Set(allFiltered));
+                  }}
+                  className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
+                  style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}
+                >
+                  <Ionicons name="checkbox" size={24} color="#10B981" />
+                  <Text className="text-emerald-600 font-semibold text-xs mt-1">Select All ({filteredItems.length})</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSelectedItems(new Set())}
+                  className="flex-1 bg-white rounded-xl px-2 py-3 items-center justify-center"
+                  style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}
+                >
+                  <Ionicons name="close-circle" size={24} color="#EF4444" />
+                  <Text className="text-red-600 font-semibold text-xs mt-1">Clear</Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
 

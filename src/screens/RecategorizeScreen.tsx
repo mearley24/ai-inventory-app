@@ -25,15 +25,26 @@ import { safeGoBack } from "../utils/navigation";
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
+  route?: {
+    params?: {
+      selectedItemIds?: string[];
+    };
+  };
 };
 
-export default function RecategorizeScreen({ navigation }: Props) {
+export default function RecategorizeScreen({ navigation, route }: Props) {
   const items = useInventoryStore((s) => s.items);
   const bulkUpdateCategories = useInventoryStore((s) => s.bulkUpdateCategories);
 
   const [websiteUrl, setWebsiteUrl] = useState("https://www.snapav.com");
   const [activeJob, setActiveJob] = useState<RecategorizationJob | null>(null);
   const [canNavigateAway, setCanNavigateAway] = useState(false);
+
+  // Get selected items if passed from inventory screen
+  const selectedItemIds = route?.params?.selectedItemIds;
+  const itemsToProcess = selectedItemIds
+    ? items.filter(item => selectedItemIds.includes(item.id))
+    : items;
 
   // Check for active job on mount
   useEffect(() => {
@@ -110,7 +121,7 @@ export default function RecategorizeScreen({ navigation }: Props) {
   };
 
   const handleRecategorize = async () => {
-    if (items.length === 0) {
+    if (itemsToProcess.length === 0) {
       Alert.alert("No Items", "No inventory items to recategorize");
       return;
     }
@@ -121,16 +132,20 @@ export default function RecategorizeScreen({ navigation }: Props) {
     }
 
     // Calculate estimated time
-    const estimatedMinutes = Math.ceil((items.length / 30) / 3 * 5 / 60); // 30 per batch, 3 concurrent, ~5 sec each
+    const estimatedMinutes = Math.ceil((itemsToProcess.length / 30) / 3 * 5 / 60); // 30 per batch, 3 concurrent, ~5 sec each
 
-    let warningMessage = `This will process all ${items.length} items with AI:\n\n1. Extract categories from ${websiteUrl}\n2. Analyze items and categorize\n3. Auto-update categories & subcategories\n\nEstimated time: ~${estimatedMinutes} minutes`;
+    let warningMessage = selectedItemIds
+      ? `This will process ${itemsToProcess.length} selected items with AI:\n\n`
+      : `This will process all ${itemsToProcess.length} items with AI:\n\n`;
 
-    if (items.length > 500) {
+    warningMessage += `1. Extract categories from ${websiteUrl}\n2. Analyze items and categorize\n3. Auto-update categories & subcategories\n\nEstimated time: ~${estimatedMinutes} minutes`;
+
+    if (itemsToProcess.length > 500) {
       warningMessage += `\n\n⚠️ IMPORTANT: Keep your phone awake and the app open during processing. If interrupted, no changes will be applied.`;
     }
 
     Alert.alert(
-      "Recategorize All Items",
+      selectedItemIds ? "Recategorize Selected Items" : "Recategorize All Items",
       warningMessage,
       [
         { text: "Cancel", style: "cancel" },
@@ -139,7 +154,7 @@ export default function RecategorizeScreen({ navigation }: Props) {
           onPress: async () => {
             try {
               // Create background job
-              const job = await createJob(websiteUrl, items.length);
+              const job = await createJob(websiteUrl, itemsToProcess.length);
               setActiveJob(job);
               setCanNavigateAway(false); // Keep them on screen
 
@@ -147,13 +162,13 @@ export default function RecategorizeScreen({ navigation }: Props) {
               monitorJob(job.id);
 
               // Execute job in background
-              executeJob(job.id, items, (updatedJob) => {
+              executeJob(job.id, itemsToProcess, (updatedJob) => {
                 setActiveJob(updatedJob);
               });
 
               Alert.alert(
                 "Processing Started",
-                `Keep the app open and your phone awake.\nProgress: 0 / ${items.length}`,
+                `Keep the app open and your phone awake.\nProgress: 0 / ${itemsToProcess.length}`,
                 [{ text: "OK" }]
               );
             } catch (error) {
@@ -268,9 +283,20 @@ export default function RecategorizeScreen({ navigation }: Props) {
             <Text className="text-white text-base font-semibold mb-2">
               Statistics
             </Text>
-            <Text className="text-white/90 text-sm">
-              Total Items: {items.length}
-            </Text>
+            {selectedItemIds ? (
+              <>
+                <Text className="text-white/90 text-sm">
+                  Selected Items: {itemsToProcess.length}
+                </Text>
+                <Text className="text-white/70 text-xs mt-1">
+                  (Total inventory: {items.length} items)
+                </Text>
+              </>
+            ) : (
+              <Text className="text-white/90 text-sm">
+                Total Items: {items.length}
+              </Text>
+            )}
             {activeJob && (
               <>
                 <Text className="text-white/90 text-sm">

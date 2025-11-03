@@ -152,54 +152,16 @@ export default function InventoryScreen({ navigation }: any) {
     return (
       <Pressable
         onPress={() => navigation.navigate("EditItem", { item })}
-        className="bg-white border-b border-neutral-200 px-4 py-3 flex-row items-center"
+        className="bg-white border-b border-neutral-200 px-4 py-2 flex-row items-center"
       >
         {/* Content */}
         <View className="flex-1">
-          <View className="flex-row items-center mb-1">
-            {item.isStarred && (
-              <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 6 }} />
-            )}
-            {lowStock && (
-              <Ionicons name="warning" size={14} color="#F59E0B" style={{ marginRight: 6 }} />
-            )}
-            <Text className="text-base font-semibold text-neutral-900 flex-1" numberOfLines={1}>
-              {item.name}
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            {item.supplier && (
-              <>
-                <Text className="text-xs text-purple-600 font-semibold mr-2">
-                  {item.supplier}
-                </Text>
-                <Text className="text-xs text-neutral-400 mr-1">•</Text>
-              </>
-            )}
-            <Text className="text-xs text-neutral-500 mr-2">
-              {item.category}
-            </Text>
-            <Text className="text-xs text-neutral-400 mr-1">•</Text>
-            <Text className="text-xs text-neutral-600 font-medium">
-              Qty: {item.quantity}
-            </Text>
-            {item.price && (
-              <>
-                <Text className="text-xs text-neutral-400 mx-1">•</Text>
-                <Text className="text-xs font-semibold text-indigo-600">
-                  ${item.price.toFixed(2)}
-                </Text>
-              </>
-            )}
-          </View>
-          {item.location && (
-            <View className="flex-row items-center mt-1">
-              <Ionicons name="location" size={12} color="#10B981" style={{ marginRight: 4 }} />
-              <Text className="text-xs text-emerald-600 font-medium">
-                {item.location}
-              </Text>
-            </View>
-          )}
+          <Text className="text-base font-semibold text-neutral-900" numberOfLines={1}>
+            {item.isStarred ? "⭐ " : ""}{lowStock ? "⚠️ " : ""}{item.name}
+          </Text>
+          <Text className="text-xs text-neutral-600 mt-0.5" numberOfLines={1}>
+            {item.supplier && `${item.supplier} • `}{item.category} • Qty: {item.quantity}{item.price && ` • $${item.price.toFixed(2)}`}{item.location && ` • 📍${item.location}`}
+          </Text>
         </View>
 
         {/* Action Buttons */}
@@ -245,8 +207,8 @@ export default function InventoryScreen({ navigation }: any) {
   // Add getItemLayout for better FlatList performance
   const getItemLayout = React.useCallback(
     (_: any, index: number) => ({
-      length: 64, // compact height (py-3 = ~64px)
-      offset: 64 * index,
+      length: 48, // even more compact height (py-2 = ~48px)
+      offset: 48 * index,
       index,
     }),
     []
@@ -571,10 +533,10 @@ export default function InventoryScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={20}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={20}
-          windowSize={10}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={100}
+          initialNumToRender={15}
+          windowSize={5}
         />
 
         {/* Floating Add Button */}

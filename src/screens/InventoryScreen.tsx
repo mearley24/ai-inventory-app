@@ -384,7 +384,7 @@ export default function InventoryScreen({ navigation }: any) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="px-6 mb-4"
+            style={{ paddingHorizontal: 24, marginBottom: 16 }}
             contentContainerStyle={{ gap: 12, paddingRight: 24 }}
           >
             {suppliers.map((supplier) => (
@@ -392,21 +392,22 @@ export default function InventoryScreen({ navigation }: any) {
                 key={supplier}
                 onPress={() => setSelectedSupplier(supplier)}
                 style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 24,
+                  paddingHorizontal: 24,
+                  paddingVertical: 14,
+                  borderRadius: 25,
                   backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#FFFFFF",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.05,
                   shadowRadius: 2,
                   elevation: 1,
+                  minWidth: 100,
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 15,
-                    fontWeight: "600",
+                    fontSize: 16,
+                    fontWeight: "700",
                     color: selectedSupplier === supplier ? "#FFFFFF" : "#374151",
                     textAlign: "center",
                   }}
@@ -423,7 +424,7 @@ export default function InventoryScreen({ navigation }: any) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="px-6 mb-4"
+            style={{ paddingHorizontal: 24, marginBottom: 16 }}
             contentContainerStyle={{ gap: 12, paddingRight: 24 }}
           >
             {locations.map((location) => (
@@ -431,9 +432,9 @@ export default function InventoryScreen({ navigation }: any) {
                 key={location}
                 onPress={() => setSelectedLocation(location)}
                 style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 24,
+                  paddingHorizontal: 24,
+                  paddingVertical: 14,
+                  borderRadius: 25,
                   backgroundColor: selectedLocation === location ? "#059669" : "#FFFFFF",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
@@ -442,18 +443,19 @@ export default function InventoryScreen({ navigation }: any) {
                   elevation: 1,
                   flexDirection: "row",
                   alignItems: "center",
+                  minWidth: 110,
                 }}
               >
                 <Ionicons
                   name="location"
-                  size={16}
+                  size={18}
                   color={selectedLocation === location ? "#FFFFFF" : "#10B981"}
-                  style={{ marginRight: 6 }}
+                  style={{ marginRight: 8 }}
                 />
                 <Text
                   style={{
-                    fontSize: 15,
-                    fontWeight: "600",
+                    fontSize: 16,
+                    fontWeight: "700",
                     color: selectedLocation === location ? "#FFFFFF" : "#374151",
                   }}
                 >
@@ -523,7 +525,7 @@ export default function InventoryScreen({ navigation }: any) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="px-6 mb-4"
+          style={{ paddingHorizontal: 24, marginBottom: 16 }}
           contentContainerStyle={{ gap: 12, paddingRight: 24 }}
         >
           {categories.map((category) => (
@@ -531,21 +533,22 @@ export default function InventoryScreen({ navigation }: any) {
               key={category}
               onPress={() => setSelectedCategory(category)}
               style={{
-                paddingHorizontal: 20,
-                paddingVertical: 12,
-                borderRadius: 24,
+                paddingHorizontal: 24,
+                paddingVertical: 14,
+                borderRadius: 25,
                 backgroundColor: selectedCategory === category ? "#4F46E5" : "#FFFFFF",
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.05,
                 shadowRadius: 2,
                 elevation: 1,
+                minWidth: 90,
               }}
             >
               <Text
                 style={{
-                  fontSize: 15,
-                  fontWeight: "600",
+                  fontSize: 16,
+                  fontWeight: "700",
                   color: selectedCategory === category ? "#FFFFFF" : "#374151",
                   textAlign: "center",
                 }}

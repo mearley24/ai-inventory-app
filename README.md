@@ -113,6 +113,30 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 - **Excel/CSV:** XLSX library for file imports
 - **Icons:** Expo Vector Icons (Ionicons)
 
+## Performance Optimizations ⚡ NEW!
+
+The app has been optimized for smooth, fast performance across all screens:
+
+**Rendering Improvements:**
+- **FlatList virtualization** - Only renders visible items, greatly improves scrolling
+- **Removed heavy animations** - Eliminated FadeInDown on every list item
+- **Optimized rendering** - Reduced batch sizes and window sizes for better memory usage
+- **React.memo callbacks** - Prevents unnecessary re-renders of list items
+
+**State Management:**
+- **Individual Zustand selectors** - Prevents re-render cascades
+- **Memoized computations** - Expensive filters/sorts only run when data changes
+- **Optimized dependencies** - Reduced unnecessary useEffect and useMemo triggers
+
+**Settings Applied:**
+- `removeClippedSubviews={true}` - Unmounts off-screen components
+- `maxToRenderPerBatch={10}` - Renders 10 items at a time
+- `initialNumToRender={10}` - Shows 10 items on mount
+- `windowSize={5}` - Keeps 5 viewports of items in memory
+- `updateCellsBatchingPeriod={100}` - Throttles updates for smoother scrolling
+
+These optimizations make the app significantly faster, especially with large inventories (100+ items).
+
 ## Project Structure
 
 ```

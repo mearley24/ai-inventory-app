@@ -6,18 +6,17 @@ import { useInventoryStore } from "../state/inventoryStore";
 import { useTimeTrackerStore } from "../state/timeTrackerStore";
 import { useAuthStore } from "../state/authStore";
 import { InventoryItem } from "../types/inventory";
-import Animated, { FadeInDown } from "react-native-reanimated";
 
 export default function InventoryScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("All");
   const [showOnlyStarred, setShowOnlyStarred] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"all" | "inStock">("inStock");
+
+  // Individual selectors to prevent unnecessary re-renders
   const items = useInventoryStore((s) => s.items);
   const deleteItem = useInventoryStore((s) => s.deleteItem);
   const toggleStarred = useInventoryStore((s) => s.toggleStarred);
-  const getLowStockItems = useInventoryStore((s) => s.getLowStockItems);
-  const getStarredLowStockItems = useInventoryStore((s) => s.getStarredLowStockItems);
   const projects = useTimeTrackerStore((s) => s.projects);
   const company = useAuthStore((s) => s.company);
 
@@ -46,8 +45,16 @@ export default function InventoryScreen({ navigation }: any) {
     [items]
   );
 
-  const lowStockItems = React.useMemo(() => getLowStockItems(), [items]);
-  const starredLowStockItems = React.useMemo(() => getStarredLowStockItems(), [items]);
+  // Compute low stock items directly instead of calling store methods
+  const lowStockItems = React.useMemo(() =>
+    items.filter((item) => item.lowStockThreshold && item.quantity <= item.lowStockThreshold),
+    [items]
+  );
+
+  const starredLowStockItems = React.useMemo(() =>
+    items.filter((item) => item.isStarred && item.lowStockThreshold && item.quantity <= item.lowStockThreshold),
+    [items]
+  );
 
   // Count items in stock
   const inStockCount = React.useMemo(() => items.filter((item) => item.quantity > 0).length, [items]);
@@ -59,7 +66,7 @@ export default function InventoryScreen({ navigation }: any) {
       hasShownAlert.current = true;
       Alert.alert(
         "Low Stock Alert",
-        `${starredLowStockItems.length} starred ${starredLowStockItems.length === 1 ? "item is" : "items are"} running low:\n\n${starredLowStockItems.map(item => `• ${item.name} (${item.quantity} left)`).join("\n")}`,
+        `${starredLowStockItems.length} starred ${starredLowStockItems.length === 1 ? "item is" : "items are"} running low:\n\n${starredLowStockItems.map((item: InventoryItem) => `• ${item.name} (${item.quantity} left)`).join("\n")}`,
         [{ text: "OK" }]
       );
     }
@@ -88,9 +95,6 @@ export default function InventoryScreen({ navigation }: any) {
     return filtered;
   }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab]);
 
-  const isLowStock = React.useCallback((item: InventoryItem) => {
-    return item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
-  }, []);
 
   // Render item for FlatList - memoized for performance
   const renderItem = React.useCallback(({ item, index }: { item: InventoryItem; index: number }) => {
@@ -98,9 +102,7 @@ export default function InventoryScreen({ navigation }: any) {
     const lowStock = item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
 
     return (
-    <Animated.View
-      entering={FadeInDown.delay(Math.min(index * 30, 300)).springify()}
-    >
+    <View>
       <Pressable
         onPress={() => navigation.navigate("EditItem", { item })}
         className="bg-white rounded-2xl p-4 mb-3 mx-6 flex-row items-center"
@@ -192,9 +194,9 @@ export default function InventoryScreen({ navigation }: any) {
           <Ionicons name="trash-outline" size={20} color="#EF4444" />
         </Pressable>
       </Pressable>
-    </Animated.View>
+    </View>
     );
-  }, [navigation, isLowStock, toggleStarred, deleteItem, projects]);
+  }, [navigation, toggleStarred, deleteItem, projects]);
 
   const ListEmptyComponent = React.useCallback(() => (
     <View className="items-center justify-center py-20 px-6">
@@ -463,10 +465,10 @@ export default function InventoryScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={15}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={15}
-          windowSize={10}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={100}
+          initialNumToRender={10}
+          windowSize={5}
         />
 
         {/* Floating Add Button */}

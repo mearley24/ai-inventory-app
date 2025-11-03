@@ -59,10 +59,10 @@ export default function AddPasswordScreen({ navigation }: any) {
       await addPassword({
         companyId: company.id,
         title: title.trim(),
-        username: username.trim() || undefined,
+        username: username.trim() || "",
         plainPassword: password,
-        website: website.trim() || undefined,
-        notes: notes.trim() || undefined,
+        website: website.trim() || "",
+        notes: notes.trim() || "",
         category,
         tags: [],
         createdBy: user.uid,

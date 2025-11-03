@@ -249,12 +249,8 @@ export default function ImportScreen({ navigation }: any) {
               text: "Continue",
               onPress: async () => {
                 setImporting(true);
-                setProcessingMessage("Auto-merging and importing...");
+                setProcessingMessage("Importing items...");
                 const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
-
-                // Run final cleanup to catch any remaining duplicates
-                setProcessingMessage("Final cleanup...");
-                await autoMergeAllDuplicates();
 
                 setImportResult({ success: successCount, failed: 0, merged: mergedCount });
                 setImporting(false);
@@ -265,12 +261,8 @@ export default function ImportScreen({ navigation }: any) {
         );
       } else {
         // Auto-merge and import
-        setProcessingMessage("Auto-merging and importing...");
+        setProcessingMessage("Importing items...");
         const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
-
-        // Run final cleanup to catch any remaining duplicates
-        setProcessingMessage("Final cleanup...");
-        await autoMergeAllDuplicates();
 
         setImportResult({ success: successCount, failed: 0, merged: mergedCount });
         setImporting(false);

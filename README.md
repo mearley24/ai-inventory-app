@@ -113,7 +113,7 @@ The app features a professional, modern design inspired by Apple's Human Interfa
 - **Excel/CSV:** XLSX library for file imports
 - **Icons:** Expo Vector Icons (Ionicons)
 
-## Performance Optimizations ⚡ NEW!
+## Performance Optimizations ⚡ UPDATED!
 
 The app has been optimized for maximum speed and responsiveness:
 
@@ -144,14 +144,14 @@ The app has been optimized for maximum speed and responsiveness:
 - Simple border-based separators
 - Reduced padding and margins
 
-**Automatic Duplicate Management:**
-- **On App Start** - Automatically merges all duplicates when app opens
-- **After Every Import** - CSV, invoice, and D-Tools imports trigger cleanup
-- **Preserves Quantities** - Duplicate quantities are summed together
-- **Keeps Best Item** - Prioritizes items with barcodes
-- **Background Processing** - Happens silently without user intervention
+**Import Optimizations:**
+- **Removed auto-merge on startup** - No longer runs duplicate cleanup on app launch (was causing slowdown)
+- **Removed cleanup after imports** - No duplicate scanning after CSV/invoice imports
+- **Manual cleanup available** - Red trash button in top-right to clear all inventory
+- **Faster imports** - CSV, D-Tools, and invoice imports complete instantly without post-processing
+- **Offline support** - Full offline functionality with local storage persistence
 
-These optimizations make scrolling through 1000+ items buttery smooth.
+These optimizations make scrolling through 1000+ items buttery smooth and imports nearly instant.
 
 ## Project Structure
 

@@ -53,27 +53,10 @@ export default function App() {
       }
     };
 
-    // Auto-cleanup duplicates after a delay to let Firestore sync complete
-    const cleanupDuplicates = async () => {
-      try {
-        // Wait 3 seconds for Firestore sync to complete
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        console.log("Starting automatic duplicate cleanup...");
-        const result = await autoMergeAllDuplicates();
-        if (result.merged > 0) {
-          console.log(`Auto-merged ${result.merged} duplicate groups (removed ${result.removed} items)`);
-        } else {
-          console.log("No duplicates found");
-        }
-      } catch (error) {
-        console.error("Error during duplicate cleanup:", error);
-      }
-    };
-
     initializeInvoiceServices();
-    cleanupDuplicates();
-  }, [autoMergeAllDuplicates]);
+    // REMOVED: Auto-merge duplicates on startup - was causing performance issues
+    // Users can manually clear inventory if needed
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

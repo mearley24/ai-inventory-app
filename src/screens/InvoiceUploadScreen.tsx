@@ -207,9 +207,6 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
     // Auto-merge and add items
     const { addedCount, mergedCount } = await autoMergeAndAddInvoiceItems(itemsToAdd);
 
-    // Run final cleanup to catch any remaining duplicates
-    await autoMergeAllDuplicates();
-
     let message = "";
     if (addedCount > 0 && mergedCount > 0) {
       message = `Added ${addedCount} new items and merged ${mergedCount} with existing items`;

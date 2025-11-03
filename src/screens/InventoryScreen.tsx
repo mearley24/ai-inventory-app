@@ -31,7 +31,7 @@ export default function InventoryScreen({ navigation }: any) {
   const handleClearAll = () => {
     Alert.alert(
       "Clear All Inventory",
-      `Are you sure you want to delete ALL ${items.length} items? This cannot be undone!`,
+      `Are you sure you want to delete ALL ${items.length} items? This will delete from cloud and local storage. This cannot be undone!`,
       [
         {
           text: "Cancel",
@@ -41,8 +41,19 @@ export default function InventoryScreen({ navigation }: any) {
           text: "Delete All",
           style: "destructive",
           onPress: async () => {
-            await clearAll();
-            Alert.alert("Success", "All inventory items have been deleted");
+            try {
+              // Clear from store (this handles Firestore)
+              await clearAll();
+
+              // Also clear local AsyncStorage to be thorough
+              const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+              await AsyncStorage.removeItem("inventory-storage");
+
+              Alert.alert("Success", "All inventory items have been deleted from cloud and device");
+            } catch (error) {
+              console.error("Error clearing inventory:", error);
+              Alert.alert("Error", "Failed to clear inventory. Please try again.");
+            }
           },
         },
       ]

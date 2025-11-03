@@ -385,13 +385,13 @@ export default function InventoryScreen({ navigation }: any) {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-6 mb-4"
-            contentContainerStyle={{ gap: 8 }}
+            contentContainerStyle={{ gap: 10, paddingRight: 24 }}
           >
             {suppliers.map((supplier) => (
               <Pressable
                 key={supplier}
                 onPress={() => setSelectedSupplier(supplier)}
-                className={`px-4 py-2 rounded-full ${
+                className={`px-5 py-2.5 rounded-full ${
                   selectedSupplier === supplier
                     ? "bg-purple-600"
                     : "bg-white"
@@ -402,14 +402,16 @@ export default function InventoryScreen({ navigation }: any) {
                   shadowOpacity: 0.05,
                   shadowRadius: 2,
                   elevation: 1,
+                  minWidth: 80,
                 }}
               >
                 <Text
-                  className={`font-medium ${
+                  className={`font-semibold text-sm text-center ${
                     selectedSupplier === supplier
                       ? "text-white"
                       : "text-neutral-700"
                   }`}
+                  numberOfLines={1}
                 >
                   {supplier}
                 </Text>
@@ -424,13 +426,13 @@ export default function InventoryScreen({ navigation }: any) {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="px-6 mb-4"
-            contentContainerStyle={{ gap: 8 }}
+            contentContainerStyle={{ gap: 10, paddingRight: 24 }}
           >
             {locations.map((location) => (
               <Pressable
                 key={location}
                 onPress={() => setSelectedLocation(location)}
-                className={`px-4 py-2 rounded-full flex-row items-center ${
+                className={`px-5 py-2.5 rounded-full flex-row items-center ${
                   selectedLocation === location
                     ? "bg-emerald-600"
                     : "bg-white"
@@ -441,20 +443,22 @@ export default function InventoryScreen({ navigation }: any) {
                   shadowOpacity: 0.05,
                   shadowRadius: 2,
                   elevation: 1,
+                  minWidth: 100,
                 }}
               >
                 <Ionicons
                   name="location"
-                  size={14}
+                  size={16}
                   color={selectedLocation === location ? "white" : "#10B981"}
-                  style={{ marginRight: 4 }}
+                  style={{ marginRight: 6 }}
                 />
                 <Text
-                  className={`font-medium ${
+                  className={`font-semibold text-sm ${
                     selectedLocation === location
                       ? "text-white"
                       : "text-neutral-700"
                   }`}
+                  numberOfLines={1}
                 >
                   {location}
                 </Text>

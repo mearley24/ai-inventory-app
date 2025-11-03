@@ -232,12 +232,20 @@ export default function InventoryScreen({ navigation }: any) {
         <View className="px-6 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
-            <Pressable
-              onPress={handleShowCompanyId}
-              className="bg-indigo-100 rounded-full w-10 h-10 items-center justify-center"
-            >
-              <Ionicons name="people" size={20} color="#4F46E5" />
-            </Pressable>
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={handleClearAll}
+                className="bg-red-100 rounded-full w-10 h-10 items-center justify-center"
+              >
+                <Ionicons name="trash" size={20} color="#EF4444" />
+              </Pressable>
+              <Pressable
+                onPress={handleShowCompanyId}
+                className="bg-indigo-100 rounded-full w-10 h-10 items-center justify-center"
+              >
+                <Ionicons name="people" size={20} color="#4F46E5" />
+              </Pressable>
+            </View>
           </View>
 
           {/* Stats Row */}

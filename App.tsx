@@ -53,9 +53,12 @@ export default function App() {
       }
     };
 
-    // Auto-cleanup duplicates on app start
+    // Auto-cleanup duplicates after a delay to let Firestore sync complete
     const cleanupDuplicates = async () => {
       try {
+        // Wait 3 seconds for Firestore sync to complete
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
         console.log("Starting automatic duplicate cleanup...");
         const result = await autoMergeAllDuplicates();
         if (result.merged > 0) {

@@ -416,9 +416,11 @@ Assign inventory items to specific projects to track which products are allocate
 - Estimating job costs based on used inventory
 - Organizing multi-project workflows
 
-## D-Tools Integration ⭐ NEW!
+## D-Tools Integration ⭐ AUTOMATED!
 
-Import Bill of Materials (BOM) exports from D-Tools System Integrator (SI) with one tap.
+Import Bill of Materials (BOM) exports from D-Tools System Integrator (SI) - now with **automated folder-based import**!
+
+### Method 1: Manual Import (Quick)
 
 **How it Works:**
 1. Export your BOM from D-Tools SI as CSV or Excel
@@ -426,6 +428,31 @@ Import Bill of Materials (BOM) exports from D-Tools System Integrator (SI) with 
 3. Select your D-Tools export file
 4. Review the parsed items and projects
 5. Tap "Import to Inventory"
+
+### Method 2: Automated Folder Import ⭐ NEW!
+
+**Automatic Syncing:**
+- Drop D-Tools BOMs into a dedicated folder
+- Tap "Scan Now" to process all new files
+- All new BOMs are automatically imported
+- Never manually import the same file twice
+
+**How to Use:**
+1. Tap "D-Tools Folder" button on Inventory screen
+2. Tap the info icon to see the folder path
+3. Export BOMs from D-Tools SI as CSV/Excel format
+4. Place exported files in the D-Tools folder
+5. Tap "Scan Now" to import all new files
+
+**Features:**
+- **Processing History** - Tracks which files have been imported
+- **Batch Processing** - Handles multiple BOMs at once
+- **File Management** - View, delete, and manage D-Tools files
+- **Statistics** - Track total files, processed count, and pending items
+- **Clear History** - Reset processing to re-import files if needed
+
+**Folder Location:**
+The D-Tools folder is created automatically at app startup. Tap the info icon in the D-Tools Folder screen to see the exact path.
 
 **What Gets Imported:**
 - **Inventory Items:**

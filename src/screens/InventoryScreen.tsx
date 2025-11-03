@@ -312,8 +312,26 @@ export default function InventoryScreen({ navigation }: any) {
               }}
             >
               <Ionicons name="folder" size={20} color="#DB2777" />
-              <Text className="text-pink-600 font-semibold ml-2">Folder</Text>
+              <Text className="text-pink-600 font-semibold ml-2">Invoice Folder</Text>
             </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("DToolsFolder")}
+              className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <Ionicons name="folder-open" size={20} color="#10B981" />
+              <Text className="text-emerald-600 font-semibold ml-2">D-Tools Folder</Text>
+            </Pressable>
+          </View>
+
+          {/* Third Actions Row */}
+          <View className="flex-row gap-2 mb-3">
             <Pressable
               onPress={() => navigation.navigate("Recategorize")}
               className="flex-1 bg-white rounded-xl px-4 py-3 flex-row items-center justify-center"

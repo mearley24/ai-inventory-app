@@ -6,6 +6,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import React from "react";
 import { initializeInvoiceFolder } from "./src/services/invoiceScanner";
 import { registerInvoiceScannerTask } from "./src/services/invoiceScannerTask";
+import { initializeDToolsFolder } from "./src/services/dtoolsScanner";
 import { useInventoryStore } from "./src/state/inventoryStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -53,7 +54,18 @@ export default function App() {
       }
     };
 
+    // Initialize D-Tools folder
+    const initializeDToolsServices = async () => {
+      try {
+        await initializeDToolsFolder();
+        console.log("D-Tools folder initialized");
+      } catch (error) {
+        console.error("Error initializing D-Tools services:", error);
+      }
+    };
+
     initializeInvoiceServices();
+    initializeDToolsServices();
     // REMOVED: Auto-merge duplicates on startup - was causing performance issues
     // Users can manually clear inventory if needed
   }, []);

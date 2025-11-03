@@ -116,7 +116,8 @@ function TabNavigator() {
 }
 
 export default function AppNavigator() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = true; // TEMPORARY: Force authenticated for testing
+  // const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const initializeAuth = useAuthStore((s) => s.initializeAuth);
 
   React.useEffect(() => {

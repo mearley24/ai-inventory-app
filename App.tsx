@@ -37,18 +37,6 @@ export default function App() {
   const autoMergeAllDuplicates = useInventoryStore((s) => s.autoMergeAllDuplicates);
 
   React.useEffect(() => {
-    // FORCE CLEAR ALL DATA - Remove this after one app reload
-    const forceClear = async () => {
-      try {
-        await AsyncStorage.clear();
-        console.log("✅ FORCED CLEAR: All AsyncStorage cleared!");
-      } catch (error) {
-        console.error("❌ Error clearing storage:", error);
-      }
-    };
-
-    forceClear();
-
     // Reset navigation on mount
     setNavigationKey(Date.now());
 
@@ -78,8 +66,6 @@ export default function App() {
 
     initializeInvoiceServices();
     initializeDToolsServices();
-    // REMOVED: Auto-merge duplicates on startup - was causing performance issues
-    // Users can manually clear inventory if needed
   }, []);
 
   return (

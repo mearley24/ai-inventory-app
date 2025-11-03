@@ -1,6 +1,5 @@
 import * as FileSystem from "expo-file-system";
 import { ParsedInvoice } from "../types/inventory";
-import { getAnthropicClient } from "./anthropic";
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
 
@@ -156,35 +155,52 @@ export async function parseInvoicePDF(pdfUri: string): Promise<ParsedInvoice> {
 
     console.log("PDF base64 length:", base64PDF.length);
 
-    // Use Claude API which supports PDFs natively (using Haiku for faster processing)
-    const anthropic = getAnthropicClient();
+    const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_ANTHROPIC_API_KEY;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 2048,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: base64PDF,
+    // Use direct fetch to Claude API (more reliable in React Native)
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 2048,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: "application/pdf",
+                  data: base64PDF,
+                },
               },
-            },
-            {
-              type: "text",
-              text: 'Parse this invoice PDF and extract all line items. Return ONLY valid JSON in this exact format (no markdown, no code blocks): {"vendor": "string or null", "invoiceNumber": "string or null", "date": "string or null", "lineItems": [{"description": "string", "quantity": number, "unitPrice": number, "totalPrice": number, "sku": "string or null", "category": "string or null"}], "subtotal": number or null, "tax": number or null, "total": number or null}. Capture ALL rows from any product/line item tables. Use null for missing fields.',
-            },
-          ],
-        },
-      ],
+              {
+                type: "text",
+                text: 'Parse this invoice PDF and extract all line items. Return ONLY valid JSON in this exact format (no markdown, no code blocks): {"vendor": "string or null", "invoiceNumber": "string or null", "date": "string or null", "lineItems": [{"description": "string", "quantity": number, "unitPrice": number, "totalPrice": number, "sku": "string or null", "category": "string or null"}], "subtotal": number or null, "tax": number or null, "total": number or null}. Capture ALL rows from any product/line item tables. Use null for missing fields.',
+              },
+            ],
+          },
+        ],
+      }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        `Claude API error: ${errorData.error?.message || response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+
     // Extract the text content from Claude's response
-    const textContent = message.content.find((block) => block.type === "text");
+    const textContent = data.content.find((block: any) => block.type === "text");
     if (!textContent || textContent.type !== "text") {
       throw new Error("No text response from Claude API");
     }

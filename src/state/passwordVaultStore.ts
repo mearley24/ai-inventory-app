@@ -59,14 +59,18 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
           const passwords: PasswordEntry[] = [];
+          const seenIds = new Set<string>(); // Track IDs to prevent duplicates
+
           snapshot.forEach((doc) => {
             const pwd = doc.data() as PasswordEntry;
-            // Only include passwords user has access to
+            // Only include passwords user has access to and prevent duplicates
             if (
-              pwd.createdBy === userId ||
-              pwd.sharedWith.includes(userId) ||
-              pwd.sharedWith.includes(userId) // Check by email too
+              !seenIds.has(pwd.id) &&
+              (pwd.createdBy === userId ||
+                pwd.sharedWith.includes(userId) ||
+                pwd.allowedRoles.includes(userId))
             ) {
+              seenIds.add(pwd.id);
               passwords.push(pwd);
             }
           });
@@ -86,20 +90,23 @@ export const usePasswordVaultStore = create<PasswordVaultState>()(
 
       addPassword: async (password) => {
         const encryptedPassword = await encryptPassword(password.plainPassword);
+
+        // Use Firestore's auto-generated ID to ensure uniqueness
+        const newPasswordRef = doc(collection(firestore, "passwords"));
         const newPassword: PasswordEntry = {
           ...password,
-          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+          id: newPasswordRef.id,
           encryptedPassword,
           createdAt: Date.now(),
           updatedAt: Date.now(),
           accessCount: 0,
         };
 
-        // Save to Firestore
-        await setDoc(doc(firestore, "passwords", newPassword.id), newPassword);
+        // Save to Firestore (real-time listener will update local state)
+        await setDoc(newPasswordRef, newPassword);
 
-        // Update local state
-        set((state) => ({ passwords: [...state.passwords, newPassword] }));
+        // Don't manually update local state - let the real-time listener handle it
+        // This prevents duplicate entries
       },
 
       updatePassword: async (id, updates) => {

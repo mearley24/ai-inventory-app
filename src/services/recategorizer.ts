@@ -243,8 +243,8 @@ export async function recategorizeItems(
   // Get flat list of category > subcategory combinations
   const flatCategories = getFlatCategoryList(categoryStructure);
 
-  // Batch items for efficiency (process in chunks of 20)
-  const batchSize = 20;
+  // SPEED OPTIMIZATION 1: Larger batch size (50 instead of 20) for fewer API calls
+  const batchSize = 50;
   const batches = [];
   for (let i = 0; i < items.length; i += batchSize) {
     batches.push(items.slice(i, i + batchSize));
@@ -252,49 +252,29 @@ export async function recategorizeItems(
 
   let processedCount = 0;
 
-  for (const batch of batches) {
+  // SPEED OPTIMIZATION 2: Process batches in parallel (3 at a time)
+  const concurrentBatches = 3;
+  const batchPromises: Promise<void>[] = [];
+
+  const processBatch = async (batch: InventoryItem[], batchIndex: number) => {
     try {
+      // Only include id and name for faster processing (skip description for speed)
       const itemsForAI = batch.map((item) => ({
         id: item.id,
         name: item.name,
-        description: item.description || "",
-        currentCategory: item.category,
-        currentSubcategory: item.subcategory,
       }));
 
-      const prompt = `You are a product categorization expert.
+      // SPEED OPTIMIZATION 3: Shorter, more direct prompt
+      const prompt = `Categorize these products into "Category > Subcategory" format.
 
-Given these inventory items, categorize each one into the most appropriate category and subcategory.
+Categories:
+${flatCategories.slice(0, 50).join("\n")}
 
-Available categories and subcategories:
-${flatCategories.join("\n")}
+Products:
+${itemsForAI.map(item => `${item.id}: ${item.name}`).join("\n")}
 
-Items to categorize:
-${JSON.stringify(itemsForAI, null, 2)}
-
-IMPORTANT: Each category is formatted as "Main Category > Subcategory".
-You must split this into separate category and subcategory fields.
-
-For example, "Audio > Amplifiers" becomes:
-- category: "Audio"
-- subcategory: "Amplifiers"
-
-Return ONLY a JSON array with this exact format (no markdown, no code blocks):
-[
-  {
-    "id": "item_id",
-    "category": "Main Category",
-    "subcategory": "Subcategory"
-  }
-]
-
-Rules:
-- Split the "Category > Subcategory" format into two separate fields
-- Use the exact category and subcategory names from the list above
-- Match based on product name and description
-- Return valid JSON only`;
-
-      console.log("Making OpenAI API request...");
+Return JSON array:
+[{"id": "id", "category": "Main", "subcategory": "Sub"}]`;
 
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -305,27 +285,18 @@ Rules:
             "Authorization": `Bearer ${OPENAI_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
+            model: "gpt-4o-mini", // Fast model
+            messages: [{ role: "user", content: prompt }],
             temperature: 0.0,
-            max_tokens: 2000,
+            max_tokens: 1500, // Reduced for speed
           }),
         }
       );
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("OpenAI API error response:", errorText);
-        throw new Error(
-          `OpenAI API error (${response.status}): ${errorText}`
-        );
+        console.error(`Batch ${batchIndex} error:`, errorText);
+        throw new Error(`API error (${response.status}): ${errorText}`);
       }
 
       const data = await response.json();
@@ -363,20 +334,25 @@ Rules:
         items.length
       );
     } catch (error) {
-      console.error("Error in batch categorization:", error);
-      // Log more details about the error
+      console.error(`Error in batch ${batchIndex}:`, error);
       if (error instanceof Error) {
-        console.error("Error name:", error.name);
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
+        console.error("Error details:", error.message);
       }
-      // Continue with next batch even if one fails
       onProgress?.(
-        `Error processing batch, continuing... (${processedCount}/${items.length})`,
+        `Error in batch ${batchIndex}, continuing... (${processedCount}/${items.length})`,
         processedCount,
         items.length
       );
     }
+  };
+
+  // Process batches with controlled concurrency
+  for (let i = 0; i < batches.length; i += concurrentBatches) {
+    const currentBatchGroup = batches.slice(i, i + concurrentBatches);
+    const promises = currentBatchGroup.map((batch, index) =>
+      processBatch(batch, i + index)
+    );
+    await Promise.all(promises);
   }
 
   return results;

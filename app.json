@@ -1,54 +1,17 @@
 {
   "expo": {
-    "name": "Inventory Manager",
+    "name": "vibecode",
     "slug": "vibecode",
     "scheme": "vibecode",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.vibecode.inventorymanager",
-      "infoPlist": {
-        "NSCameraUsageDescription": "This app needs camera access to scan barcodes and take photos of inventory items.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select images for inventory items.",
-        "NSLocationWhenInUseUsageDescription": "This app uses your location to track where inventory items are stored."
-      }
+      "supportsTablet": true
     },
     "android": {
-      "edgeToEdgeEnabled": true,
-      "package": "com.vibecode.inventorymanager",
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION"
-      ],
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes and take photos."
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-project-id-here"
-      }
+      "edgeToEdgeEnabled": true
     }
   }
 }

@@ -353,6 +353,11 @@ Return JSON array:
 
       let content = data.choices[0].message.content.trim();
 
+      // Log first batch response for debugging
+      if (batchIndex === 0) {
+        console.log("First batch AI response:", content.substring(0, 500));
+      }
+
       // Remove markdown code blocks if present
       if (content.startsWith("```")) {
         content = content.replace(/```json\n?|\n?```/g, "").trim();
@@ -379,14 +384,21 @@ Return JSON array:
       // Process results
       for (const cat of categorizations) {
         const item = batch.find((i) => i.id === cat.id);
-        if (item && (item.category !== cat.category || item.subcategory !== cat.subcategory)) {
-          results.push({
-            id: item.id,
-            oldCategory: item.category,
-            newCategory: cat.category,
-            oldSubcategory: item.subcategory,
-            newSubcategory: cat.subcategory,
-          });
+        if (item) {
+          console.log(`Item "${item.name}": ${item.category} > ${item.subcategory || 'none'} → ${cat.category} > ${cat.subcategory}`);
+
+          if (item.category !== cat.category || item.subcategory !== cat.subcategory) {
+            console.log(`  ✓ Change detected for "${item.name}"`);
+            results.push({
+              id: item.id,
+              oldCategory: item.category,
+              newCategory: cat.category,
+              oldSubcategory: item.subcategory,
+              newSubcategory: cat.subcategory,
+            });
+          } else {
+            console.log(`  - No change needed for "${item.name}"`);
+          }
         }
       }
 

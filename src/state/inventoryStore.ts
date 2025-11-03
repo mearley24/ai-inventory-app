@@ -168,7 +168,15 @@ export const useInventoryStore = create<InventoryState>()(
         }));
       },
 
-      clearAll: () => {
+      clearAll: async () => {
+        const currentItems = get().items;
+
+        // Delete all items from Firestore
+        await Promise.all(
+          currentItems.map((item) => deleteDoc(doc(firestore, "inventory", item.id)))
+        );
+
+        // Clear local state
         set({ items: [] });
       },
 

@@ -18,6 +18,7 @@ export default function InventoryScreen({ navigation }: any) {
   const items = useInventoryStore((s) => s.items);
   const deleteItem = useInventoryStore((s) => s.deleteItem);
   const toggleStarred = useInventoryStore((s) => s.toggleStarred);
+  const clearAll = useInventoryStore((s) => s.clearAll);
   const projects = useTimeTrackerStore((s) => s.projects);
   const company = useAuthStore((s) => s.company);
 
@@ -26,6 +27,27 @@ export default function InventoryScreen({ navigation }: any) {
     const uniqueSuppliers = Array.from(new Set(items.map((item) => item.supplier).filter(Boolean))) as string[];
     return ["All", ...uniqueSuppliers.sort()];
   }, [items]);
+
+  const handleClearAll = () => {
+    Alert.alert(
+      "Clear All Inventory",
+      `Are you sure you want to delete ALL ${items.length} items? This cannot be undone!`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete All",
+          style: "destructive",
+          onPress: async () => {
+            await clearAll();
+            Alert.alert("Success", "All inventory items have been deleted");
+          },
+        },
+      ]
+    );
+  };
 
   const handleShowCompanyId = () => {
     if (company) {
@@ -202,12 +224,20 @@ export default function InventoryScreen({ navigation }: any) {
         <View className="px-6 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-3xl font-bold text-neutral-900">Inventory</Text>
-            <Pressable
-              onPress={handleShowCompanyId}
-              className="bg-indigo-100 rounded-full w-10 h-10 items-center justify-center"
-            >
-              <Ionicons name="people" size={20} color="#4F46E5" />
-            </Pressable>
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={handleClearAll}
+                className="bg-red-100 rounded-full w-10 h-10 items-center justify-center"
+              >
+                <Ionicons name="trash" size={20} color="#EF4444" />
+              </Pressable>
+              <Pressable
+                onPress={handleShowCompanyId}
+                className="bg-indigo-100 rounded-full w-10 h-10 items-center justify-center"
+              >
+                <Ionicons name="people" size={20} color="#4F46E5" />
+              </Pressable>
+            </View>
           </View>
 
           {/* Stats Row */}

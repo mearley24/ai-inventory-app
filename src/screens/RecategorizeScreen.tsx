@@ -51,7 +51,26 @@ export default function RecategorizeScreen({ navigation, route }: Props) {
     const checkActiveJob = async () => {
       const job = await getActiveJob();
       if (job) {
+        console.log(`Found job with status: ${job.status}, changes: ${job.changes?.length || 0}`);
         setActiveJob(job);
+
+        // If job is completed but wasn't applied, apply it now
+        if (job.status === "completed" && job.changes && job.changes.length > 0) {
+          console.log("🎉 Found completed job on mount! Applying changes...");
+          const updates = job.changes.map((r) => ({
+            id: r.id,
+            category: r.newCategory,
+            subcategory: r.newSubcategory,
+          }));
+          await bulkUpdateCategories(updates);
+          console.log("✅ Changes applied successfully on mount!");
+          Alert.alert(
+            "Changes Applied!",
+            `Successfully applied ${job.changes.length} category changes from previous session.`,
+            [{ text: "OK" }]
+          );
+        }
+
         // If job is running, continue monitoring it
         if (job.status === "running") {
           setCanNavigateAway(true);

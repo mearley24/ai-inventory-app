@@ -152,9 +152,10 @@ The app has been **extremely optimized** for maximum speed with large inventorie
 - **No auto-merge on startup** - App starts instantly
 - **No cleanup after imports** - Imports complete immediately
 - **Manual cleanup available** - Red trash button in top-right to clear all inventory
-- **Faster imports** - CSV, D-Tools, and invoice imports complete instantly
+- **Batch imports** - All items added in single operation (not one-by-one)
 - **100% Local-only** - Firestore sync DISABLED for maximum performance
 - **No network delays** - All operations happen instantly on device
+- **Debug logging** - Console shows import progress and item counts
 
 **IMPORTANT: Local-Only Mode**
 - App is now 100% local for maximum performance
@@ -163,7 +164,7 @@ The app has been **extremely optimized** for maximum speed with large inventorie
 - Works perfectly offline at your storage facility
 - To re-enable cloud sync later, Firestore can be re-activated
 
-These optimizations make the app **blazing fast** even with 10,000+ items. Scrolling is butter smooth and imports are near-instant.
+These optimizations make the app **blazing fast** even with 10,000+ items. Scrolling is butter smooth and imports complete in seconds (not minutes).
 
 ## Project Structure
 

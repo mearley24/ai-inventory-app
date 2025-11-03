@@ -141,6 +141,9 @@ export default function ImportScreen({ navigation }: any) {
     let successCount = 0;
     let mergedCount = 0;
 
+    // Collect all items to add at once
+    const itemsToAdd: any[] = [];
+
     for (const newItem of parsedItems) {
       const normalizedName = newItem.name.toLowerCase().trim();
 
@@ -181,15 +184,21 @@ export default function ImportScreen({ navigation }: any) {
         await updateItem(existingItem.id, updates);
         mergedCount++;
       } else {
-        // New item: Add to inventory
+        // Collect new items to add in batch
         const itemToAdd = {
           ...newItem,
           quantity: resetQuantities ? 0 : (newItem.quantity || 0),
           supplier: supplierName, // Add supplier field
         };
-        await addItems([itemToAdd]);
+        itemsToAdd.push(itemToAdd);
         successCount++;
       }
+    }
+
+    // Add all new items in ONE batch operation
+    if (itemsToAdd.length > 0) {
+      console.log(`Adding ${itemsToAdd.length} items in batch...`);
+      await addItems(itemsToAdd);
     }
 
     return { successCount, mergedCount };

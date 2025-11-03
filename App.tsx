@@ -7,6 +7,7 @@ import React from "react";
 import { initializeInvoiceFolder } from "./src/services/invoiceScanner";
 import { registerInvoiceScannerTask } from "./src/services/invoiceScannerTask";
 import { useInventoryStore } from "./src/state/inventoryStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -38,18 +39,30 @@ export default function App() {
     // Reset navigation on mount
     setNavigationKey(Date.now());
 
-    // TEMPORARY: Clear all inventory on startup
-    const clearInventory = async () => {
+    // FORCE WIPE EVERYTHING
+    const forceWipe = async () => {
       try {
-        console.log("Clearing all inventory...");
-        await autoMergeAllDuplicates(); // This will trigger
+        console.log("=== FORCE WIPING ALL DATA ===");
+
+        // 1. Clear AsyncStorage completely
+        await AsyncStorage.clear();
+        console.log("AsyncStorage cleared");
+
+        // 2. Force clear inventory store
         const store = useInventoryStore.getState();
+        store.items = [];
         await store.clearAll();
-        console.log("All inventory cleared!");
+        console.log("Inventory store cleared");
+
+        // 3. Force set empty items
+        useInventoryStore.setState({ items: [] });
+        console.log("=== ALL DATA WIPED ===");
       } catch (error) {
-        console.error("Error clearing inventory:", error);
+        console.error("Error wiping data:", error);
       }
     };
+
+    forceWipe();
 
     // Initialize invoice folder and background scanning
     const initializeInvoiceServices = async () => {
@@ -65,25 +78,8 @@ export default function App() {
       }
     };
 
-    // Auto-cleanup duplicates on app start
-    const cleanupDuplicates = async () => {
-      try {
-        console.log("Starting automatic duplicate cleanup...");
-        const result = await autoMergeAllDuplicates();
-        if (result.merged > 0) {
-          console.log(`Auto-merged ${result.merged} duplicate groups (removed ${result.removed} items)`);
-        } else {
-          console.log("No duplicates found");
-        }
-      } catch (error) {
-        console.error("Error during duplicate cleanup:", error);
-      }
-    };
-
-    clearInventory(); // Clear everything first
     initializeInvoiceServices();
-    // cleanupDuplicates(); // Don't run this after clearing
-  }, [autoMergeAllDuplicates]);
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

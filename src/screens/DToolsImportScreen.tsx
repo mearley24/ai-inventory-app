@@ -32,7 +32,7 @@ export default function DToolsImportScreen({ navigation }: Props) {
   const handlePickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
+        type: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"],
         copyToCacheDirectory: true,
       });
 
@@ -42,6 +42,16 @@ export default function DToolsImportScreen({ navigation }: Props) {
 
       const file = result.assets[0];
       setSelectedFile(file.name);
+
+      // Check if it's a PDF
+      if (file.mimeType === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+        Alert.alert(
+          "PDF Not Supported",
+          "D-Tools PDF files are not yet supported. Please export as Excel (.xlsx) or CSV from D-Tools instead."
+        );
+        return;
+      }
+
       setLoading(true);
       setResult(null);
 

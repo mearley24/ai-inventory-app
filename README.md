@@ -26,6 +26,8 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - Search and filter items by name, description, and category
 - **⭐ Star favorite/everyday items** for quick access and alerts
 - **📊 In Stock vs All Items Tabs** - Separate views for items with stock vs. full inventory
+- **📍 Location Tracking** - Track exact storage location for each item (Shelf A-3, Bin 12, Truck, etc.)
+- **🗺️ Location Filtering** - Filter inventory by storage location for easy procurement
 - Add items manually or through barcode scanning
 - Edit item details with intuitive +/- quantity controls
 - Price tracking for each item
@@ -216,8 +218,10 @@ Each inventory item includes:
 - Category
 - **Subcategory** (optional, for precise classification)
 - Description (optional)
+- **Location** (optional, physical storage location like "Shelf A-3", "Bin 12", "Truck")
 - Low stock threshold (optional)
 - **Starred/Favorite flag** (for everyday items)
+- **Supplier** (optional, tracks which supplier/source the item is from)
 - **Assigned Project** (optional, links item to a specific project/job)
 - Creation and update timestamps
 

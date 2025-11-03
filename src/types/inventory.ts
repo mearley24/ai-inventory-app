@@ -13,6 +13,7 @@ export interface InventoryItem {
   isStarred?: boolean; // Favorite/everyday items
   assignedProjectId?: string; // Project assignment
   supplier?: string; // Supplier/source (e.g., "SnapAV", "Adorama", etc.)
+  location?: string; // Physical storage location (e.g., "Shelf A-3", "Bin 12", "Truck")
   createdAt: number;
   updatedAt: number;
 }

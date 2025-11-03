@@ -13,6 +13,7 @@ export default function InventoryScreen({ navigation }: any) {
   const [showOnlyStarred, setShowOnlyStarred] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"all" | "inStock">("inStock");
   const [selectedSupplier, setSelectedSupplier] = React.useState<string>("All");
+  const [selectedLocation, setSelectedLocation] = React.useState<string>("All");
 
   // Individual selectors to prevent unnecessary re-renders
   const items = useInventoryStore((s) => s.items);
@@ -26,6 +27,12 @@ export default function InventoryScreen({ navigation }: any) {
   const suppliers = React.useMemo(() => {
     const uniqueSuppliers = Array.from(new Set(items.map((item) => item.supplier).filter(Boolean))) as string[];
     return ["All", ...uniqueSuppliers.sort()];
+  }, [items]);
+
+  // Get unique locations from items
+  const locations = React.useMemo(() => {
+    const uniqueLocations = Array.from(new Set(items.map((item) => item.location).filter(Boolean))) as string[];
+    return ["All", ...uniqueLocations.sort()];
   }, [items]);
 
   const handleClearAll = () => {
@@ -121,7 +128,8 @@ export default function InventoryScreen({ navigation }: any) {
       const matchesStarred = !showOnlyStarred || item.isStarred;
       const matchesTab = activeTab === "all" || (activeTab === "inStock" && item.quantity > 0);
       const matchesSupplier = selectedSupplier === "All" || item.supplier === selectedSupplier;
-      return matchesSearch && matchesCategory && matchesStarred && matchesTab && matchesSupplier;
+      const matchesLocation = selectedLocation === "All" || item.location === selectedLocation;
+      return matchesSearch && matchesCategory && matchesStarred && matchesTab && matchesSupplier && matchesLocation;
     });
 
     // Sort: items with quantity > 0 at top, then by quantity descending
@@ -134,7 +142,7 @@ export default function InventoryScreen({ navigation }: any) {
     });
 
     return filtered;
-  }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab, selectedSupplier]);
+  }, [items, searchQuery, selectedCategory, showOnlyStarred, activeTab, selectedSupplier, selectedLocation]);
 
 
   // Render item for FlatList - simple, compact list design
@@ -184,6 +192,14 @@ export default function InventoryScreen({ navigation }: any) {
               </>
             )}
           </View>
+          {item.location && (
+            <View className="flex-row items-center mt-1">
+              <Ionicons name="location" size={12} color="#10B981" style={{ marginRight: 4 }} />
+              <Text className="text-xs text-emerald-600 font-medium">
+                {item.location}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Action Buttons */}
@@ -408,6 +424,51 @@ export default function InventoryScreen({ navigation }: any) {
                   }`}
                 >
                   {supplier}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Location Tabs */}
+        {locations.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="px-6 mb-4"
+            contentContainerStyle={{ gap: 8 }}
+          >
+            {locations.map((location) => (
+              <Pressable
+                key={location}
+                onPress={() => setSelectedLocation(location)}
+                className={`px-4 py-2 rounded-full flex-row items-center ${
+                  selectedLocation === location
+                    ? "bg-emerald-600"
+                    : "bg-white"
+                }`}
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              >
+                <Ionicons
+                  name="location"
+                  size={14}
+                  color={selectedLocation === location ? "white" : "#10B981"}
+                  style={{ marginRight: 4 }}
+                />
+                <Text
+                  className={`font-medium ${
+                    selectedLocation === location
+                      ? "text-white"
+                      : "text-neutral-700"
+                  }`}
+                >
+                  {location}
                 </Text>
               </Pressable>
             ))}

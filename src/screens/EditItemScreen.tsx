@@ -45,6 +45,7 @@ export default function EditItemScreen({ navigation, route }: any) {
   const [price, setPrice] = React.useState(item?.price?.toString() || "");
   const [category, setCategory] = React.useState(item?.category || "Other");
   const [description, setDescription] = React.useState(item?.description || "");
+  const [location, setLocation] = React.useState(item?.location || "");
   const [lowStockThreshold, setLowStockThreshold] = React.useState(
     item?.lowStockThreshold?.toString() || ""
   );
@@ -69,6 +70,7 @@ export default function EditItemScreen({ navigation, route }: any) {
       price: price ? parseFloat(price) : undefined,
       category,
       description: description.trim() || undefined,
+      location: location.trim() || undefined,
       lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold) : undefined,
       isStarred,
       assignedProjectId,
@@ -273,6 +275,30 @@ export default function EditItemScreen({ navigation, route }: any) {
                   shadowRadius: 2,
                   elevation: 1,
                   minHeight: 80,
+                }}
+              />
+            </View>
+
+            {/* Location Input */}
+            <View className="mb-6">
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="location" size={16} color="#6B7280" />
+                <Text className="text-sm font-semibold text-neutral-700 ml-1">
+                  Storage Location
+                </Text>
+              </View>
+              <TextInput
+                className="bg-white rounded-xl px-4 py-3 text-base text-neutral-900"
+                placeholder="e.g., Shelf A-3, Bin 12, Truck"
+                placeholderTextColor="#9CA3AF"
+                value={location}
+                onChangeText={setLocation}
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 2,
+                  elevation: 1,
                 }}
               />
             </View>

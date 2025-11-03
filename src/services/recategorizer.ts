@@ -363,6 +363,19 @@ Return JSON array:
         content = content.replace(/```json\n?|\n?```/g, "").trim();
       }
 
+      // Remove any text before the JSON array
+      // AI sometimes adds explanatory text like "Here is the JSON:"
+      const jsonStart = content.indexOf('[');
+      const jsonEnd = content.lastIndexOf(']');
+
+      if (jsonStart === -1 || jsonEnd === -1) {
+        console.error(`Batch ${batchIndex} no JSON array found in response:`, content.substring(0, 300));
+        throw new Error("No JSON array found in AI response");
+      }
+
+      // Extract just the JSON array
+      content = content.substring(jsonStart, jsonEnd + 1).trim();
+
       // Parse categorizations with error handling
       let categorizations;
       try {

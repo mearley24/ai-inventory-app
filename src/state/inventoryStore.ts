@@ -386,6 +386,10 @@ export const useInventoryStore = create<InventoryState>()(
     {
       name: "inventory-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // DON'T persist items - they come from Firestore
+      partialize: (state) => ({
+        currentCompanyId: state.currentCompanyId,
+      }),
     }
   )
 );

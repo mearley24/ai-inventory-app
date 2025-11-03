@@ -43,7 +43,7 @@ export default function InventoryScreen({ navigation }: any) {
   // Memoize expensive computations
   const categories = React.useMemo(() =>
     ["All", ...Array.from(new Set(items.map((item) => item.category)))],
-    [items.length] // Only recompute when item count changes
+    [items]
   );
 
   const lowStockItems = React.useMemo(() => getLowStockItems(), [items]);
@@ -95,10 +95,11 @@ export default function InventoryScreen({ navigation }: any) {
   // Render item for FlatList - memoized for performance
   const renderItem = React.useCallback(({ item, index }: { item: InventoryItem; index: number }) => {
     const assignedProject = projects.find(p => p.id === item.assignedProjectId);
+    const lowStock = item.lowStockThreshold && item.quantity <= item.lowStockThreshold;
 
     return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index * 50, 500)).springify()}
+      entering={FadeInDown.delay(Math.min(index * 30, 300)).springify()}
     >
       <Pressable
         onPress={() => navigation.navigate("EditItem", { item })}
@@ -114,13 +115,13 @@ export default function InventoryScreen({ navigation }: any) {
         {/* Icon */}
         <View
           className={`w-12 h-12 rounded-full items-center justify-center ${
-            isLowStock(item) ? "bg-amber-100" : "bg-indigo-100"
+            lowStock ? "bg-amber-100" : "bg-indigo-100"
           }`}
         >
           <Ionicons
-            name={isLowStock(item) ? "warning" : "cube"}
+            name={lowStock ? "warning" : "cube"}
             size={24}
-            color={isLowStock(item) ? "#F59E0B" : "#4F46E5"}
+            color={lowStock ? "#F59E0B" : "#4F46E5"}
           />
         </View>
 
@@ -206,6 +207,16 @@ export default function InventoryScreen({ navigation }: any) {
       </Text>
     </View>
   ), [searchQuery]);
+
+  // Add getItemLayout for better FlatList performance
+  const getItemLayout = React.useCallback(
+    (_: any, index: number) => ({
+      length: 96, // approximate height of item (p-4 mb-3 = ~96px)
+      offset: 96 * index,
+      index,
+    }),
+    []
+  );
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -448,13 +459,14 @@ export default function InventoryScreen({ navigation }: any) {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={ListEmptyComponent}
+          getItemLayout={getItemLayout}
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
+          maxToRenderPerBatch={15}
           updateCellsBatchingPeriod={50}
-          initialNumToRender={10}
-          windowSize={21}
+          initialNumToRender={15}
+          windowSize={10}
         />
 
         {/* Floating Add Button */}

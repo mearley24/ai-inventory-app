@@ -38,6 +38,19 @@ export default function App() {
     // Reset navigation on mount
     setNavigationKey(Date.now());
 
+    // TEMPORARY: Clear all inventory on startup
+    const clearInventory = async () => {
+      try {
+        console.log("Clearing all inventory...");
+        await autoMergeAllDuplicates(); // This will trigger
+        const store = useInventoryStore.getState();
+        await store.clearAll();
+        console.log("All inventory cleared!");
+      } catch (error) {
+        console.error("Error clearing inventory:", error);
+      }
+    };
+
     // Initialize invoice folder and background scanning
     const initializeInvoiceServices = async () => {
       try {
@@ -67,8 +80,9 @@ export default function App() {
       }
     };
 
+    clearInventory(); // Clear everything first
     initializeInvoiceServices();
-    cleanupDuplicates();
+    // cleanupDuplicates(); // Don't run this after clearing
   }, [autoMergeAllDuplicates]);
 
   return (

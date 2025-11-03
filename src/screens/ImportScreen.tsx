@@ -19,6 +19,7 @@ export default function ImportScreen({ navigation }: any) {
   const items = useInventoryStore((s) => s.items);
   const updateItem = useInventoryStore((s) => s.updateItem);
   const deleteItem = useInventoryStore((s) => s.deleteItem);
+  const autoMergeAllDuplicates = useInventoryStore((s) => s.autoMergeAllDuplicates);
 
   const parseExcelOrCSV = async (uri: string, mimeType?: string) => {
     const isExcel = mimeType?.includes("spreadsheet") ||
@@ -241,6 +242,11 @@ export default function ImportScreen({ navigation }: any) {
                 setImporting(true);
                 setProcessingMessage("Auto-merging and importing...");
                 const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
+
+                // Run final cleanup to catch any remaining duplicates
+                setProcessingMessage("Final cleanup...");
+                await autoMergeAllDuplicates();
+
                 setImportResult({ success: successCount, failed: 0, merged: mergedCount });
                 setImporting(false);
                 setProcessingMessage("");
@@ -252,6 +258,11 @@ export default function ImportScreen({ navigation }: any) {
         // Auto-merge and import
         setProcessingMessage("Auto-merging and importing...");
         const { successCount, mergedCount } = await autoMergeAndImport(parsedItems);
+
+        // Run final cleanup to catch any remaining duplicates
+        setProcessingMessage("Final cleanup...");
+        await autoMergeAllDuplicates();
+
         setImportResult({ success: successCount, failed: 0, merged: mergedCount });
         setImporting(false);
         setProcessingMessage("");

@@ -6,6 +6,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import React from "react";
 import { initializeInvoiceFolder } from "./src/services/invoiceScanner";
 import { registerInvoiceScannerTask } from "./src/services/invoiceScannerTask";
+import { useInventoryStore } from "./src/state/inventoryStore";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -31,6 +32,7 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 export default function App() {
   // Force navigation to reset on mount - don't persist state
   const [navigationKey, setNavigationKey] = React.useState(0);
+  const autoMergeAllDuplicates = useInventoryStore((s) => s.autoMergeAllDuplicates);
 
   React.useEffect(() => {
     // Reset navigation on mount
@@ -50,8 +52,24 @@ export default function App() {
       }
     };
 
+    // Auto-cleanup duplicates on app start
+    const cleanupDuplicates = async () => {
+      try {
+        console.log("Starting automatic duplicate cleanup...");
+        const result = await autoMergeAllDuplicates();
+        if (result.merged > 0) {
+          console.log(`Auto-merged ${result.merged} duplicate groups (removed ${result.removed} items)`);
+        } else {
+          console.log("No duplicates found");
+        }
+      } catch (error) {
+        console.error("Error during duplicate cleanup:", error);
+      }
+    };
+
     initializeInvoiceServices();
-  }, []);
+    cleanupDuplicates();
+  }, [autoMergeAllDuplicates]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

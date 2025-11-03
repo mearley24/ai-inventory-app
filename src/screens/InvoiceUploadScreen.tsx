@@ -37,6 +37,7 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
   const addItems = useInventoryStore((s) => s.addItems);
   const items = useInventoryStore((s) => s.items);
   const updateItem = useInventoryStore((s) => s.updateItem);
+  const autoMergeAllDuplicates = useInventoryStore((s) => s.autoMergeAllDuplicates);
 
   const autoMergeAndAddInvoiceItems = async (invoiceItems: any[]) => {
     let addedCount = 0;
@@ -205,6 +206,9 @@ export default function InvoiceUploadScreen({ navigation }: Props) {
 
     // Auto-merge and add items
     const { addedCount, mergedCount } = await autoMergeAndAddInvoiceItems(itemsToAdd);
+
+    // Run final cleanup to catch any remaining duplicates
+    await autoMergeAllDuplicates();
 
     let message = "";
     if (addedCount > 0 && mergedCount > 0) {

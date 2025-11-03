@@ -268,49 +268,61 @@ export const useInventoryStore = create<InventoryState>()(
         }
 
         // Process each duplicate group
-        const itemsToKeep = new Set<string>();
-        const itemsToRemove = new Set<string>();
-
-        duplicateGroups.forEach((group) => {
-          // Keep the first item in the group (or the one with barcode if available)
+        for (const group of duplicateGroups) {
+          // Keep the item with barcode if available, otherwise keep the first one
           const keepItem = group.find((item) => item.barcode) || group[0];
-          itemsToKeep.add(keepItem.id);
-          mergedCount++;
 
-          // Mark other items for removal
-          group.forEach((item) => {
-            if (item.id !== keepItem.id) {
-              itemsToRemove.add(item.id);
-              removedCount++;
-            }
+          // Sum up all quantities
+          const totalQuantity = group.reduce((sum, item) => sum + item.quantity, 0);
+
+          // Get all items to remove (everything except the one we're keeping)
+          const itemsToRemove = group.filter((item) => item.id !== keepItem.id);
+
+          // Delete removed items from Firestore
+          await Promise.all(
+            itemsToRemove.map((item) => deleteDoc(doc(firestore, "inventory", item.id)))
+          );
+
+          // Update the kept item with combined quantity
+          await updateDoc(doc(firestore, "inventory", keepItem.id), {
+            quantity: totalQuantity,
+            updatedAt: Date.now(),
           });
+
+          mergedCount++;
+          removedCount += itemsToRemove.length;
+        }
+
+        // Update local state: remove duplicates and update quantities
+        set((state) => {
+          const itemsToRemoveIds = new Set<string>();
+          const itemsToUpdate = new Map<string, number>();
+
+          duplicateGroups.forEach((group) => {
+            const keepItem = group.find((item) => item.barcode) || group[0];
+            const totalQuantity = group.reduce((sum, item) => sum + item.quantity, 0);
+
+            itemsToUpdate.set(keepItem.id, totalQuantity);
+
+            group.forEach((item) => {
+              if (item.id !== keepItem.id) {
+                itemsToRemoveIds.add(item.id);
+              }
+            });
+          });
+
+          return {
+            items: state.items
+              .filter((item) => !itemsToRemoveIds.has(item.id))
+              .map((item) => {
+                const newQuantity = itemsToUpdate.get(item.id);
+                if (newQuantity !== undefined) {
+                  return { ...item, quantity: newQuantity, updatedAt: Date.now() };
+                }
+                return item;
+              }),
+          };
         });
-
-        // Delete removed items from Firestore
-        await Promise.all(
-          Array.from(itemsToRemove).map((id) => deleteDoc(doc(firestore, "inventory", id)))
-        );
-
-        // Update all remaining items to have quantity 0 in Firestore
-        await Promise.all(
-          Array.from(itemsToKeep).map((id) =>
-            updateDoc(doc(firestore, "inventory", id), {
-              quantity: 0,
-              updatedAt: Date.now(),
-            })
-          )
-        );
-
-        // Update local state: remove duplicates and set all quantities to 0
-        set((state) => ({
-          items: state.items
-            .filter((item) => !itemsToRemove.has(item.id))
-            .map((item) => ({
-              ...item,
-              quantity: 0,
-              updatedAt: Date.now(),
-            })),
-        }));
 
         return { merged: mergedCount, removed: removedCount };
       },

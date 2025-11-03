@@ -144,6 +144,13 @@ The app has been optimized for maximum speed and responsiveness:
 - Simple border-based separators
 - Reduced padding and margins
 
+**Automatic Duplicate Management:**
+- **On App Start** - Automatically merges all duplicates when app opens
+- **After Every Import** - CSV, invoice, and D-Tools imports trigger cleanup
+- **Preserves Quantities** - Duplicate quantities are summed together
+- **Keeps Best Item** - Prioritizes items with barcodes
+- **Background Processing** - Happens silently without user intervention
+
 These optimizations make scrolling through 1000+ items buttery smooth.
 
 ## Project Structure

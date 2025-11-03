@@ -47,46 +47,12 @@ export const useInventoryStore = create<InventoryState>()(
       currentCompanyId: null,
 
       initializeSync: (companyId: string) => {
-        // First, migrate any existing items that don't have a companyId
-        const existingItems = get().items;
-        const itemsToMigrate = existingItems.filter((item) => !item.companyId);
+        // Temporarily disable real-time sync for performance
+        console.log("Firestore real-time sync DISABLED for performance");
+        set({ unsubscribe: null, currentCompanyId: companyId });
 
-        if (itemsToMigrate.length > 0) {
-          console.log(`Migrating ${itemsToMigrate.length} items to Firestore with companyId...`);
-
-          // Add companyId to existing items and upload to Firestore
-          Promise.all(
-            itemsToMigrate.map(async (item) => {
-              const updatedItem = { ...item, companyId };
-              await setDoc(doc(firestore, "inventory", item.id), updatedItem);
-            })
-          ).then(() => {
-            console.log("Migration complete!");
-          }).catch((error) => {
-            console.error("Migration error:", error);
-          });
-
-          // Update local state with companyId
-          set((state) => ({
-            items: state.items.map((item) =>
-              !item.companyId ? { ...item, companyId } : item
-            ),
-          }));
-        }
-
-        // Set up real-time listener with offline support
-        const itemsRef = collection(firestore, "inventory");
-        const q = query(itemsRef, where("companyId", "==", companyId));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          const items: InventoryItem[] = [];
-          snapshot.forEach((doc) => {
-            items.push(doc.data() as InventoryItem);
-          });
-          set({ items });
-        });
-
-        set({ unsubscribe, currentCompanyId: companyId });
+        // Just set the company ID, don't sync from Firestore
+        // All data will be local-only for maximum performance
       },
 
       stopSync: () => {
@@ -111,10 +77,10 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         };
 
-        // Save to Firestore
-        await setDoc(doc(firestore, "inventory", newItem.id), newItem);
+        // DISABLED: Firestore write for performance
+        // await setDoc(doc(firestore, "inventory", newItem.id), newItem);
 
-        // Update local state
+        // Update local state only
         set((state) => ({ items: [...state.items, newItem] }));
       },
 
@@ -132,12 +98,12 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         }));
 
-        // Save all to Firestore
-        await Promise.all(
-          newItems.map((item) => setDoc(doc(firestore, "inventory", item.id), item))
-        );
+        // DISABLED: Firestore write for performance
+        // await Promise.all(
+        //   newItems.map((item) => setDoc(doc(firestore, "inventory", item.id), item))
+        // );
 
-        // Update local state
+        // Update local state only
         set((state) => ({ items: [...state.items, ...newItems] }));
       },
 
@@ -147,10 +113,10 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         };
 
-        // Update Firestore
-        await updateDoc(doc(firestore, "inventory", id), updateData);
+        // DISABLED: Firestore write for performance
+        // await updateDoc(doc(firestore, "inventory", id), updateData);
 
-        // Update local state
+        // Update local state only
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id ? { ...item, ...updateData } : item
@@ -159,24 +125,23 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       deleteItem: async (id) => {
-        // Delete from Firestore
-        await deleteDoc(doc(firestore, "inventory", id));
+        // DISABLED: Firestore write for performance
+        // await deleteDoc(doc(firestore, "inventory", id));
 
-        // Update local state
+        // Update local state only
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
       },
 
       clearAll: async () => {
-        const currentItems = get().items;
+        // DISABLED: Firestore write for performance
+        // const currentItems = get().items;
+        // await Promise.all(
+        //   currentItems.map((item) => deleteDoc(doc(firestore, "inventory", item.id)))
+        // );
 
-        // Delete all items from Firestore
-        await Promise.all(
-          currentItems.map((item) => deleteDoc(doc(firestore, "inventory", item.id)))
-        );
-
-        // Clear local state
+        // Clear local state only
         set({ items: [] });
       },
 
@@ -200,10 +165,10 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         };
 
-        // Update Firestore
-        await updateDoc(doc(firestore, "inventory", id), updateData);
+        // DISABLED: Firestore write for performance
+        // await updateDoc(doc(firestore, "inventory", id), updateData);
 
-        // Update local state
+        // Update local state only
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id ? { ...item, ...updateData } : item

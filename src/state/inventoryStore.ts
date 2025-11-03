@@ -77,11 +77,17 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         };
 
+        console.log("✅ Adding item to store:", newItem.name);
+
         // DISABLED: Firestore write for performance
         // await setDoc(doc(firestore, "inventory", newItem.id), newItem);
 
         // Update local state only
-        set((state) => ({ items: [...state.items, newItem] }));
+        set((state) => {
+          const newItems = [...state.items, newItem];
+          console.log("✅ New item count:", newItems.length);
+          return { items: newItems };
+        });
       },
 
       addItems: async (items) => {
@@ -98,13 +104,19 @@ export const useInventoryStore = create<InventoryState>()(
           updatedAt: Date.now(),
         }));
 
+        console.log(`✅ Adding ${newItems.length} items to store`);
+
         // DISABLED: Firestore write for performance
         // await Promise.all(
         //   newItems.map((item) => setDoc(doc(firestore, "inventory", item.id), item))
         // );
 
         // Update local state only
-        set((state) => ({ items: [...state.items, ...newItems] }));
+        set((state) => {
+          const allItems = [...state.items, ...newItems];
+          console.log("✅ Total items now:", allItems.length);
+          return { items: allItems };
+        });
       },
 
       updateItem: async (id, updates) => {

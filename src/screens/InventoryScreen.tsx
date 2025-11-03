@@ -23,6 +23,11 @@ export default function InventoryScreen({ navigation }: any) {
   const projects = useTimeTrackerStore((s) => s.projects);
   const company = useAuthStore((s) => s.company);
 
+  // Debug: Log when items change
+  React.useEffect(() => {
+    console.log("📦 Inventory screen - items count:", items.length);
+  }, [items]);
+
   // Get unique suppliers from items
   const suppliers = React.useMemo(() => {
     const uniqueSuppliers = Array.from(new Set(items.map((item) => item.supplier).filter(Boolean))) as string[];

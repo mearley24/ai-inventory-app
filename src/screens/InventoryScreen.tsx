@@ -490,7 +490,7 @@ export default function InventoryScreen({ navigation }: any) {
         <View className="px-6 mb-4 flex-row gap-2">
           <Pressable
             onPress={() => setShowOnlyStarred(!showOnlyStarred)}
-            className={`px-4 py-2 rounded-full flex-row items-center ${
+            className={`px-5 py-2.5 rounded-full flex-row items-center ${
               showOnlyStarred ? "bg-amber-500" : "bg-white"
             }`}
             style={{
@@ -499,15 +499,16 @@ export default function InventoryScreen({ navigation }: any) {
               shadowOpacity: 0.05,
               shadowRadius: 2,
               elevation: 1,
+              minWidth: 120,
             }}
           >
             <Ionicons
               name={showOnlyStarred ? "star" : "star-outline"}
-              size={16}
+              size={18}
               color={showOnlyStarred ? "white" : "#F59E0B"}
             />
             <Text
-              className={`font-medium ml-1 ${
+              className={`font-semibold text-sm ml-2 ${
                 showOnlyStarred ? "text-white" : "text-amber-600"
               }`}
             >
@@ -521,13 +522,13 @@ export default function InventoryScreen({ navigation }: any) {
           horizontal
           showsHorizontalScrollIndicator={false}
           className="px-6 mb-4"
-          contentContainerStyle={{ gap: 8 }}
+          contentContainerStyle={{ gap: 10, paddingRight: 24 }}
         >
           {categories.map((category) => (
             <Pressable
               key={category}
               onPress={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full ${
+              className={`px-5 py-2.5 rounded-full ${
                 selectedCategory === category
                   ? "bg-indigo-600"
                   : "bg-white"
@@ -538,14 +539,16 @@ export default function InventoryScreen({ navigation }: any) {
                 shadowOpacity: 0.05,
                 shadowRadius: 2,
                 elevation: 1,
+                minWidth: 80,
               }}
             >
               <Text
-                className={`font-medium ${
+                className={`font-semibold text-sm text-center ${
                   selectedCategory === category
                     ? "text-white"
                     : "text-neutral-700"
                 }`}
+                numberOfLines={1}
               >
                 {category}
               </Text>

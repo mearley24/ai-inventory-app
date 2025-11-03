@@ -1,13 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { InventoryItem } from "../types/inventory";
-import { recategorizeItems, getCategoriesForWebsite } from "./recategorizer";
+import { recategorizeItems, getCategoriesForWebsite, CancellationToken } from "./recategorizer";
 
 export interface RecategorizationJob {
   id: string;
   websiteUrl: string;
   totalItems: number;
   processedItems: number;
-  status: "pending" | "running" | "completed" | "failed";
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
   startedAt: number;
   completedAt?: number;
   error?: string;
@@ -15,6 +15,9 @@ export interface RecategorizationJob {
 }
 
 const STORAGE_KEY = "recategorization-jobs";
+
+// Store cancellation tokens by job ID
+const cancellationTokens = new Map<string, CancellationToken>();
 
 /**
  * Get all recategorization jobs
@@ -113,6 +116,10 @@ export async function executeJob(
   items: InventoryItem[],
   onProgress?: (job: RecategorizationJob) => void
 ): Promise<void> {
+  // Create cancellation token for this job
+  const cancellationToken = new CancellationToken();
+  cancellationTokens.set(jobId, cancellationToken);
+
   try {
     // Mark as running
     await updateJob(jobId, {
@@ -131,7 +138,7 @@ export async function executeJob(
     // Get categories for website
     const categoryStructure = await getCategoriesForWebsite(job.websiteUrl);
 
-    // Run recategorization
+    // Run recategorization with cancellation support
     const changes = await recategorizeItems(
       items,
       categoryStructure,
@@ -147,7 +154,8 @@ export async function executeJob(
             onProgress(updatedJob);
           }
         }
-      }
+      },
+      cancellationToken
     );
 
     // Mark as completed
@@ -167,8 +175,12 @@ export async function executeJob(
     }
   } catch (error) {
     console.error("Error executing recategorization job:", error);
+
+    // Check if it was cancelled
+    const wasCancelled = error instanceof Error && error.message === "Operation was cancelled";
+
     await updateJob(jobId, {
-      status: "failed",
+      status: wasCancelled ? "cancelled" : "failed",
       completedAt: Date.now(),
       error: error instanceof Error ? error.message : "Unknown error",
     });
@@ -180,5 +192,24 @@ export async function executeJob(
         onProgress(failedJob);
       }
     }
+  } finally {
+    // Clean up cancellation token
+    cancellationTokens.delete(jobId);
   }
+}
+
+/**
+ * Cancel a running recategorization job
+ */
+export async function cancelJob(jobId: string): Promise<void> {
+  const cancellationToken = cancellationTokens.get(jobId);
+  if (cancellationToken) {
+    cancellationToken.cancel();
+  }
+
+  // Update job status
+  await updateJob(jobId, {
+    status: "cancelled",
+    completedAt: Date.now(),
+  });
 }

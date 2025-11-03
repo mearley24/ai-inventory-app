@@ -18,6 +18,7 @@ import {
   executeJob,
   getActiveJob,
   clearOldJobs,
+  cancelJob,
   RecategorizationJob
 } from "../services/recategorizationTask";
 import { safeGoBack } from "../utils/navigation";
@@ -148,6 +149,37 @@ export default function RecategorizeScreen({ navigation }: Props) {
     );
   };
 
+  const handleCancel = () => {
+    if (!activeJob || activeJob.status !== "running") {
+      return;
+    }
+
+    Alert.alert(
+      "Cancel Recategorization",
+      "Are you sure you want to cancel? Progress will be lost and no changes will be applied.",
+      [
+        { text: "Keep Running", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await cancelJob(activeJob.id);
+              Alert.alert(
+                "Cancelled",
+                "Recategorization has been cancelled.",
+                [{ text: "OK" }]
+              );
+            } catch (error) {
+              console.error("Error cancelling job:", error);
+              Alert.alert("Error", "Failed to cancel job");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <LinearGradient
       colors={["#6366f1", "#8b5cf6", "#a855f7"]}
@@ -262,6 +294,14 @@ export default function RecategorizeScreen({ navigation }: Props) {
                   You can safely navigate away. We will notify you when complete.
                 </Text>
               )}
+              <Pressable
+                onPress={handleCancel}
+                className="bg-red-500 rounded-xl px-6 py-3 mt-4"
+              >
+                <Text className="text-white font-semibold">
+                  Cancel
+                </Text>
+              </Pressable>
             </View>
           )}
 
@@ -305,6 +345,30 @@ export default function RecategorizeScreen({ navigation }: Props) {
               >
                 <Text className="text-white font-semibold">
                   Try Again
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Cancelled Message */}
+          {activeJob && activeJob.status === "cancelled" && (
+            <View className="bg-yellow-100 rounded-2xl p-6 items-center mb-4">
+              <Ionicons name="close-circle" size={64} color="#F59E0B" />
+              <Text className="text-yellow-800 text-lg font-semibold mt-4">
+                Cancelled
+              </Text>
+              <Text className="text-yellow-700 text-sm mt-2 text-center">
+                Recategorization was cancelled. No changes were applied.
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setActiveJob(null);
+                  setCanNavigateAway(false);
+                }}
+                className="bg-yellow-600 rounded-xl px-6 py-3 mt-4"
+              >
+                <Text className="text-white font-semibold">
+                  Start Over
                 </Text>
               </Pressable>
             </View>

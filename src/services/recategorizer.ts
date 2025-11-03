@@ -7,6 +7,25 @@ interface CategoryStructure {
   [category: string]: string[];
 }
 
+// Cancellation token for AI recategorization
+export class CancellationToken {
+  private _isCancelled = false;
+
+  cancel() {
+    this._isCancelled = true;
+  }
+
+  get isCancelled(): boolean {
+    return this._isCancelled;
+  }
+
+  throwIfCancelled() {
+    if (this._isCancelled) {
+      throw new Error("Operation was cancelled");
+    }
+  }
+}
+
 // Predefined category sets for popular suppliers with subcategories
 const SUPPLIER_CATEGORIES: { [key: string]: CategoryStructure } = {
   "snapav.com": {
@@ -224,7 +243,8 @@ export async function getCategoriesForWebsite(
 export async function recategorizeItems(
   items: InventoryItem[],
   categoryStructure: CategoryStructure,
-  onProgress?: (message: string, current: number, total: number) => void
+  onProgress?: (message: string, current: number, total: number) => void,
+  cancellationToken?: CancellationToken
 ): Promise<{ id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[]> {
   const results: { id: string; oldCategory: string; newCategory: string; oldSubcategory?: string; newSubcategory: string }[] = [];
 
@@ -237,6 +257,9 @@ export async function recategorizeItems(
     console.error("OpenAI API key is not configured");
     throw new Error("OpenAI API key is not configured. Please add EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY to your environment.");
   }
+
+  // Check if cancelled before starting
+  cancellationToken?.throwIfCancelled();
 
   onProgress?.("Analyzing items with AI...", 0, items.length);
 
@@ -258,6 +281,9 @@ export async function recategorizeItems(
 
   const processBatch = async (batch: InventoryItem[], batchIndex: number) => {
     try {
+      // Check for cancellation before processing each batch
+      cancellationToken?.throwIfCancelled();
+
       // Only include id and name for faster processing (skip description for speed)
       const itemsForAI = batch.map((item) => ({
         id: item.id,
@@ -292,6 +318,9 @@ Return JSON array:
           }),
         }
       );
+
+      // Check for cancellation after API call
+      cancellationToken?.throwIfCancelled();
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -334,6 +363,11 @@ Return JSON array:
         items.length
       );
     } catch (error) {
+      // If it's a cancellation error, re-throw it to stop processing
+      if (error instanceof Error && error.message === "Operation was cancelled") {
+        throw error;
+      }
+
       console.error(`Error in batch ${batchIndex}:`, error);
       if (error instanceof Error) {
         console.error("Error details:", error.message);
@@ -348,6 +382,9 @@ Return JSON array:
 
   // Process batches with controlled concurrency
   for (let i = 0; i < batches.length; i += concurrentBatches) {
+    // Check for cancellation before each batch group
+    cancellationToken?.throwIfCancelled();
+
     const currentBatchGroup = batches.slice(i, i + concurrentBatches);
     const promises = currentBatchGroup.map((batch, index) =>
       processBatch(batch, i + index)

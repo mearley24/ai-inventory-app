@@ -149,6 +149,14 @@ export default function InventoryScreen({ navigation }: any) {
             </Text>
           </View>
           <View className="flex-row items-center">
+            {item.supplier && (
+              <>
+                <Text className="text-xs text-purple-600 font-semibold mr-2">
+                  {item.supplier}
+                </Text>
+                <Text className="text-xs text-neutral-400 mr-1">•</Text>
+              </>
+            )}
             <Text className="text-xs text-neutral-500 mr-2">
               {item.category}
             </Text>

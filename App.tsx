@@ -39,39 +39,6 @@ export default function App() {
     // Reset navigation on mount
     setNavigationKey(Date.now());
 
-    // FORCE WIPE EVERYTHING
-    const forceWipe = async () => {
-      try {
-        console.log("=== FORCE WIPING ALL DATA ===");
-
-        // 1. Stop any Firestore sync first
-        const store = useInventoryStore.getState();
-        store.stopSync();
-        console.log("Firestore sync stopped");
-
-        // 2. Clear AsyncStorage completely
-        await AsyncStorage.clear();
-        console.log("AsyncStorage cleared");
-
-        // 3. Force clear inventory store
-        store.items = [];
-        await store.clearAll();
-        console.log("Inventory store cleared");
-
-        // 4. Force set empty items multiple times to override any listeners
-        useInventoryStore.setState({ items: [] });
-        setTimeout(() => useInventoryStore.setState({ items: [] }), 100);
-        setTimeout(() => useInventoryStore.setState({ items: [] }), 500);
-        setTimeout(() => useInventoryStore.setState({ items: [] }), 1000);
-
-        console.log("=== ALL DATA WIPED ===");
-      } catch (error) {
-        console.error("Error wiping data:", error);
-      }
-    };
-
-    forceWipe();
-
     // Initialize invoice folder and background scanning
     const initializeInvoiceServices = async () => {
       try {
@@ -86,8 +53,24 @@ export default function App() {
       }
     };
 
+    // Auto-cleanup duplicates on app start
+    const cleanupDuplicates = async () => {
+      try {
+        console.log("Starting automatic duplicate cleanup...");
+        const result = await autoMergeAllDuplicates();
+        if (result.merged > 0) {
+          console.log(`Auto-merged ${result.merged} duplicate groups (removed ${result.removed} items)`);
+        } else {
+          console.log("No duplicates found");
+        }
+      } catch (error) {
+        console.error("Error during duplicate cleanup:", error);
+      }
+    };
+
     initializeInvoiceServices();
-  }, []);
+    cleanupDuplicates();
+  }, [autoMergeAllDuplicates]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

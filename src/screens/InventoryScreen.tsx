@@ -381,38 +381,33 @@ export default function InventoryScreen({ navigation }: any) {
 
         {/* Supplier Tabs */}
         {suppliers.length > 1 && (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+          <View style={{ paddingHorizontal: 24, marginBottom: 12 }}>
+            <Text style={{ fontSize: 11, fontWeight: "600", color: "#9CA3AF", marginBottom: 6, letterSpacing: 0.5 }}>
               SUPPLIER
             </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12 }}
+              contentContainerStyle={{ gap: 8 }}
             >
               {suppliers.map((supplier) => (
                 <Pressable
                   key={supplier}
                   onPress={() => setSelectedSupplier(supplier)}
                   style={{
-                    paddingHorizontal: 28,
-                    paddingVertical: 16,
-                    borderRadius: 30,
-                    backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#FFFFFF",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    elevation: 2,
-                    minWidth: 120,
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 16,
+                    backgroundColor: selectedSupplier === supplier ? "#9333EA" : "#F3F4F6",
+                    borderWidth: 1,
+                    borderColor: selectedSupplier === supplier ? "#9333EA" : "#E5E7EB",
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 17,
-                      fontWeight: "700",
-                      color: selectedSupplier === supplier ? "#FFFFFF" : "#374151",
-                      textAlign: "center",
+                      fontSize: 13,
+                      fontWeight: "600",
+                      color: selectedSupplier === supplier ? "#FFFFFF" : "#4B5563",
                     }}
                   >
                     {supplier}
@@ -425,45 +420,41 @@ export default function InventoryScreen({ navigation }: any) {
 
         {/* Location Tabs */}
         {locations.length > 1 && (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+          <View style={{ paddingHorizontal: 24, marginBottom: 12 }}>
+            <Text style={{ fontSize: 11, fontWeight: "600", color: "#9CA3AF", marginBottom: 6, letterSpacing: 0.5 }}>
               LOCATION
             </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12 }}
+              contentContainerStyle={{ gap: 8 }}
             >
               {locations.map((location) => (
                 <Pressable
                   key={location}
                   onPress={() => setSelectedLocation(location)}
                   style={{
-                    paddingHorizontal: 28,
-                    paddingVertical: 16,
-                    borderRadius: 30,
-                    backgroundColor: selectedLocation === location ? "#059669" : "#FFFFFF",
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    elevation: 2,
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 16,
+                    backgroundColor: selectedLocation === location ? "#059669" : "#F3F4F6",
+                    borderWidth: 1,
+                    borderColor: selectedLocation === location ? "#059669" : "#E5E7EB",
                     flexDirection: "row",
                     alignItems: "center",
-                    minWidth: 130,
                   }}
                 >
                   <Ionicons
                     name="location"
-                    size={20}
+                    size={14}
                     color={selectedLocation === location ? "#FFFFFF" : "#10B981"}
-                    style={{ marginRight: 10 }}
+                    style={{ marginRight: 4 }}
                   />
                   <Text
                     style={{
-                      fontSize: 17,
-                      fontWeight: "700",
-                      color: selectedLocation === location ? "#FFFFFF" : "#374151",
+                      fontSize: 13,
+                      fontWeight: "600",
+                      color: selectedLocation === location ? "#FFFFFF" : "#4B5563",
                     }}
                   >
                     {location}
@@ -530,38 +521,33 @@ export default function InventoryScreen({ navigation }: any) {
         </View>
 
         {/* Category Filter */}
-        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>
+        <View style={{ paddingHorizontal: 24, marginBottom: 12 }}>
+          <Text style={{ fontSize: 11, fontWeight: "600", color: "#9CA3AF", marginBottom: 6, letterSpacing: 0.5 }}>
             CATEGORY
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12 }}
+            contentContainerStyle={{ gap: 8 }}
           >
             {categories.map((category) => (
               <Pressable
                 key={category}
                 onPress={() => setSelectedCategory(category)}
                 style={{
-                  paddingHorizontal: 28,
-                  paddingVertical: 16,
-                  borderRadius: 30,
-                  backgroundColor: selectedCategory === category ? "#4F46E5" : "#FFFFFF",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  elevation: 2,
-                  minWidth: 110,
+                  paddingHorizontal: 14,
+                  paddingVertical: 7,
+                  borderRadius: 16,
+                  backgroundColor: selectedCategory === category ? "#4F46E5" : "#F3F4F6",
+                  borderWidth: 1,
+                  borderColor: selectedCategory === category ? "#4F46E5" : "#E5E7EB",
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 17,
-                    fontWeight: "700",
-                    color: selectedCategory === category ? "#FFFFFF" : "#374151",
-                    textAlign: "center",
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: selectedCategory === category ? "#FFFFFF" : "#4B5563",
                   }}
                 >
                   {category}

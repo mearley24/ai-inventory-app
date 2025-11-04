@@ -67,6 +67,39 @@ export default function TimeTrackerScreen({ navigation }: any) {
           <Text className="text-base text-neutral-500">{projects.length} projects</Text>
         </View>
 
+        {/* Upload Proposal Button */}
+        <View className="mx-6 mb-4">
+          <Pressable onPress={() => navigation.navigate("ProposalUpload")}>
+            <LinearGradient
+              colors={["#4F46E5", "#7C3AED"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 16,
+                padding: 16,
+                shadowColor: "#4F46E5",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center mr-3">
+                    <Ionicons name="cloud-upload" size={24} color="white" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white font-bold text-base mb-1">Upload Proposal</Text>
+                    <Text className="text-white/80 text-sm">Create project from BOM or quote</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="white" />
+              </View>
+            </LinearGradient>
+          </Pressable>
+        </View>
+
         {/* Active Timer Card */}
         {activeTimer && activeProject ? (
           <View className="mx-6 mb-6">
@@ -179,6 +212,11 @@ export default function TimeTrackerScreen({ navigation }: any) {
               projects.map((project, index) => {
                 const isActive = activeTimer?.projectId === project.id;
                 const assignedItems = getItemsByProject(project.id);
+                const hasProposal = project.proposalItems && project.proposalItems.length > 0;
+                const lowStockCount = hasProposal && project.proposalItems
+                  ? project.proposalItems.filter((item) => !item.inStock).length
+                  : 0;
+
                 return (
                   <Animated.View
                     key={project.id}
@@ -224,6 +262,37 @@ export default function TimeTrackerScreen({ navigation }: any) {
                           <Text className="text-base text-neutral-500" style={{ fontVariant: ["tabular-nums"] }}>
                             {formatTime(project.totalTime + (isActive ? elapsedTime : 0))}
                           </Text>
+
+                          {/* Client Info */}
+                          {project.clientName && (
+                            <View className="flex-row items-center mt-2">
+                              <Ionicons name="person" size={14} color="#9CA3AF" />
+                              <Text className="text-xs text-neutral-500 ml-1">
+                                {project.clientName}
+                              </Text>
+                            </View>
+                          )}
+
+                          {/* Proposal Status */}
+                          {hasProposal && (
+                            <View className="flex-row items-center mt-2">
+                              <Ionicons name="document-text" size={14} color="#4F46E5" />
+                              <Text className="text-xs text-indigo-600 ml-1">
+                                {project.proposalItems?.length} items in proposal
+                              </Text>
+                            </View>
+                          )}
+
+                          {/* Stock Warning */}
+                          {lowStockCount > 0 && (
+                            <View className="flex-row items-center mt-2">
+                              <Ionicons name="warning" size={14} color="#F59E0B" />
+                              <Text className="text-xs text-amber-600 ml-1">
+                                {lowStockCount} {lowStockCount === 1 ? "item" : "items"} low/out of stock
+                              </Text>
+                            </View>
+                          )}
+
                           {assignedItems.length > 0 && (
                             <View className="flex-row items-center mt-2">
                               <Ionicons name="cube" size={14} color="#9CA3AF" />

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Project, TimeEntry, ActiveTimer } from "../types/inventory";
+import { Project, TimeEntry, ActiveTimer, ProposalItem } from "../types/inventory";
 
 interface TimeTrackerState {
   projects: Project[];
@@ -11,6 +11,10 @@ interface TimeTrackerState {
   addProject: (project: Omit<Project, "id" | "createdAt" | "totalTime">) => void;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+  addProjectWithProposal: (
+    project: Omit<Project, "id" | "createdAt" | "totalTime">,
+    proposalItems: ProposalItem[]
+  ) => void;
 
   startTimer: (projectId: string) => void;
   stopTimer: () => void;
@@ -32,6 +36,19 @@ export const useTimeTrackerStore = create<TimeTrackerState>()(
           id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
           createdAt: Date.now(),
           totalTime: 0,
+        };
+        set((state) => ({ projects: [...state.projects, newProject] }));
+      },
+
+      addProjectWithProposal: (project, proposalItems) => {
+        const newProject: Project = {
+          ...project,
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+          createdAt: Date.now(),
+          totalTime: 0,
+          proposalItems,
+          proposalDate: Date.now(),
+          proposalStatus: "pending",
         };
         set((state) => ({ projects: [...state.projects, newProject] }));
       },

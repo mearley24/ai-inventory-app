@@ -70,6 +70,9 @@ A beautiful, AI-powered inventory management app with barcode scanning, time tra
 - Clean, minimalist interface with large, readable time displays
 - **🔗 Assign inventory items to projects** - Track which products are used for each job
 - View assigned item counts on each project card
+- **📄 Proposal Upload** ⭐ NEW! - Upload proposals/BOMs to auto-create projects with stock tracking
+- **📊 Stock Level Warnings** - See which proposal items are low or out of stock
+- **👤 Client Information** - Store client name and email with each project
 
 ### 🤖 AI Features
 - Smart product identification from barcodes
@@ -424,6 +427,64 @@ Assign inventory items to specific projects to track which products are allocate
 - Keeping client-specific inventory separate
 - Estimating job costs based on used inventory
 - Organizing multi-project workflows
+
+## Proposal Upload with Stock Tracking ⭐ NEW!
+
+Upload project proposals, quotes, or BOMs to automatically create projects with intelligent stock level checking. The app will match proposal items to your current inventory and warn you about any items that are low or out of stock.
+
+**How it Works:**
+1. Navigate to Time Tracker tab
+2. Tap the "Upload Proposal" button at the top
+3. Enter project details:
+   - Project name (required)
+   - Client name (optional)
+   - Client email (optional)
+   - Description (optional)
+4. Upload proposal document via:
+   - Take a photo with camera
+   - Choose from photo library
+   - Select PDF or image file
+5. AI automatically extracts all line items with quantities
+6. App matches items to your current inventory
+7. Review stock status for each item:
+   - ✅ **In Stock** - You have enough inventory
+   - ⚠️ **Low Stock** - Insufficient quantity available
+   - ❌ **Out of Stock** - Item not in inventory
+8. Create project with full proposal data
+
+**Stock Level Intelligence:**
+- **Auto-Matching** - Proposal items automatically matched to inventory by name
+- **Real-Time Stock Checks** - See exactly how many of each item you have
+- **Low Stock Warnings** - Get alerted before creating project if items are missing
+- **Visual Indicators** - Color-coded status for each item (green/amber/red)
+- **Available Quantities** - Shows "X available, need Y" for low-stock items
+
+**Project Card Features:**
+Once created, proposal-based projects display:
+- 📄 Proposal item count badge
+- ⚠️ Low/out-of-stock warnings
+- 👤 Client name display
+- 📊 Stock status tracking
+- All standard project features (time tracking, item assignment, etc.)
+
+**Supported Formats:**
+- Images: PNG, JPEG, GIF, WEBP (via OpenAI GPT-4o Vision)
+- PDFs: Native support (via Claude Sonnet API)
+
+**Perfect for:**
+- Bid preparation and material planning
+- Client project setup with accurate stock forecasting
+- Identifying items to order before starting a job
+- Tracking which projects are ready to begin vs waiting on stock
+- Maintaining accurate inventory levels across multiple jobs
+
+**Example Workflow:**
+1. Receive client proposal/BOM via email
+2. Upload to app via Proposal Upload
+3. App shows you have 8/10 items in stock
+4. Order missing 2 items
+5. Start project timer when all items arrive
+6. Track time and assign inventory as you work
 
 ## D-Tools Integration ⭐ AUTOMATED!
 

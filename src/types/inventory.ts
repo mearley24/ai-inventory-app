@@ -18,6 +18,16 @@ export interface InventoryItem {
   updatedAt: number;
 }
 
+export interface ProposalItem {
+  name: string;
+  quantity: number;
+  matchedInventoryId?: string; // ID of matching inventory item
+  inStock: boolean; // Whether we have enough in stock
+  availableQuantity: number; // How many we have available
+  category?: string;
+  price?: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -25,6 +35,12 @@ export interface Project {
   color: string;
   createdAt: number;
   totalTime: number; // in seconds
+  // Proposal fields
+  clientName?: string;
+  clientEmail?: string;
+  proposalItems?: ProposalItem[];
+  proposalStatus?: "pending" | "approved" | "in-progress" | "completed";
+  proposalDate?: number;
 }
 
 export interface TimeEntry {

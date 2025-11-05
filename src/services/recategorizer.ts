@@ -1,6 +1,6 @@
 import { InventoryItem } from "../types/inventory";
 
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
 // Category structure with subcategories
 interface CategoryStructure {

@@ -1,7 +1,7 @@
 import * as FileSystem from "expo-file-system";
 import { ParsedInvoice } from "../types/inventory";
 
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
 /**
  * Parse an invoice image or PDF using AI to extract line items
@@ -155,7 +155,7 @@ export async function parseInvoicePDF(pdfUri: string): Promise<ParsedInvoice> {
 
     console.log("PDF base64 length:", base64PDF.length);
 
-    const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_ANTHROPIC_API_KEY;
+    const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
 
     // Use direct fetch to Claude API (more reliable in React Native)
     const response = await fetch("https://api.anthropic.com/v1/messages", {

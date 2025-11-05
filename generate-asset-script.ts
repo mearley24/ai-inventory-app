@@ -1,15 +1,13 @@
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
-This is a script that generates an image and saves it to the assets folder. 
+This is a script that generates an image and saves it to the assets folder.
 You should not use this script unless the user EXPLICITLY asks you to generate an asset.
 DO NOT PROACTIVELY GENERATE ASSETS FOR THE USER.
 
 You will need to update the prompt and the options (2nd parameter of the generateImage function) depending on your use case.
 options: {
-  size?: "1024x1024" | "1536x1024" | "1024x1536" | "auto";
-  quality?: "low" | "medium" | "high" | "auto";
-  format?: "png" | "jpeg" | "webp";
-  background?: undefined | "transparent";
+  size?: "1024x1024" | "1536x1024" | "1024x1536";
+  quality?: "standard" | "hd";
 }
 
 If you need to generate many assets, REFACTOR THIS SCRIPT TO CONCURRENTLY GENERATE UP TO 3 ASSETS AT A TIME. If you do not, the bash tool may time out.
@@ -55,8 +53,7 @@ async function main() {
     console.log("Generating image with prompt:", prompt);
     const imageUrl = await generateImage(prompt, {
       size: "1024x1024",
-      quality: "high",
-      format: "png",
+      quality: "hd",
     });
 
     console.log("Image generated successfully. URL:", imageUrl);

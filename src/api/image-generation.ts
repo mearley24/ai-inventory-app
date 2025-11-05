@@ -1,63 +1,59 @@
 /*
-IMPORTANT NOTICE: DO NOT REMOVE
-This is a custom asset generation service that uses a custom API endpoint maintained by Vibecode. If the user wants to build an app that generates images, assets, icons, or anything else, you must use this internal endpoint. Do not attempt to use replicate or chatgpt.
-You may update this service, but you should not need to.
-This endpoint uses openai's latest image generation API, AKA gpt4o, AKA gpt-image-1, so if the user is asking for that, this is the right service to use.
-Does not support video and audio generation.
+IMPORTANT NOTICE:
+This service uses OpenAI's image generation API (gpt-image-1).
+Note: Image generation requires additional setup and is not enabled by default.
+To enable, you would need to implement direct OpenAI API calls.
 */
 
-// API endpoint configuration
-const baseUrl = "https://api.vibecodeapp.com";
-const endpoint = "/api/storage/generate-image";
-
 /**
- * Generate an image using the custom API endpoint
+ * Generate an image using OpenAI's image generation API
  * @param prompt The text prompt to generate an image from
  * @param options Optional parameters for image generation
- * @returns URL of the generated image, usable to render in the app directly.
+ * @returns URL of the generated image
  */
 export async function generateImage(
   prompt: string,
   options?: {
-    size?: "1024x1024" | "1536x1024" | "1024x1536" | "auto";
-    quality?: "low" | "medium" | "high" | "auto";
-    format?: "png" | "jpeg" | "webp";
-    background?: undefined | "transparent";
+    size?: "1024x1024" | "1536x1024" | "1024x1536";
+    quality?: "standard" | "hd";
   },
 ): Promise<string> {
   try {
-    // Create request body
-    const requestBody = {
-      projectId: process.env.EXPO_PUBLIC_VIBECODE_PROJECT_ID,
-      prompt,
-      options: {
-        ...options,
-      },
-    };
+    const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
-    // Make API request
-    const response = await fetch(`${baseUrl}${endpoint}`, {
+    if (!OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    // Make API request to OpenAI
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        model: "dall-e-3",
+        prompt,
+        n: 1,
+        size: options?.size || "1024x1024",
+        quality: options?.quality || "standard",
+      }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("[AssetGenerationService] Error response:", errorData);
-      throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(errorData)}`);
+      console.error("[ImageGeneration] Error response:", errorData);
+      throw new Error(`Image generation API error: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log("[AssetGenerationService] Image generated successfully");
+    console.log("[ImageGeneration] Image generated successfully");
 
-    // Return the image data from the response
-    if (result.success && result.data) {
-      return result.data.imageUrl as string;
+    // Return the image URL from the response
+    if (result.data && result.data[0]?.url) {
+      return result.data[0].url;
     } else {
-      console.error("[AssetGenerationService] Invalid response format:", result);
       throw new Error("Invalid response format from API");
     }
   } catch (error) {

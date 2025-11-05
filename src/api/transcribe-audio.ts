@@ -21,7 +21,7 @@ export const transcribeAudio = async (localAudioUri: string) => {
     formData.append("model", "gpt-4o-transcribe");
     formData.append("language", "en");
 
-    const OPENAI_API_KEY = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
+    const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY is not set");
     }

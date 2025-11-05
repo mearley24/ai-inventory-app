@@ -1,18 +1,24 @@
 {
   "expo": {
-    "name": "vibecode",
-    "slug": "vibecode",
-    "scheme": "vibecode",
+    "name": "AI Inventory Tracker",
+    "slug": "ai-inventory-tracker",
+    "scheme": "aiinventory",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.vibecode"
+      "bundleIdentifier": "com.yourcompany.aiinventory",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs camera access for barcode scanning.",
+        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload invoices."
+      }
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yourcompany.aiinventory",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
     }
   }
 }

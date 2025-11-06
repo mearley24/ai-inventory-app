@@ -6,19 +6,45 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.aiinventory",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access for barcode scanning.",
-        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload invoices."
+        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload invoices.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save photos to your library.",
+        "NSMicrophoneUsageDescription": "This app needs microphone access for audio features.",
+        "UIBackgroundModes": ["fetch"]
       }
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "package": "com.yourcompany.aiinventory",
+      "versionCode": 1,
       "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
-    }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AI Inventory Tracker to access your camera for barcode scanning."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow AI Inventory Tracker to access your photos to upload invoices."
+        }
+      ]
+    ]
   }
 }
